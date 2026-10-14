@@ -4,14 +4,16 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "ready": "vp run -r sync && vp check && vp run -r test && vp run -r build",
+    "ready": "vp run -r sync && vp check && vp run design:lint && vp run -r test && vp run -r build",
     "dev": "vp run playground#dev",
+    "design:lint": "node scripts/lint-design.mjs DESIGN.md apps/site/DESIGN.md",
     "prepare": "vp config"
   },
   "devDependencies": {
     "@changesets/cli": "catalog:",
     "@commitlint/cli": "catalog:",
     "@commitlint/config-conventional": "catalog:",
+    "@google/design.md": "catalog:",
     "prettier": "catalog:",
     "prettier-plugin-astro": "catalog:",
     "vite-plus": "catalog:"

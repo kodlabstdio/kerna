@@ -24,6 +24,7 @@ jobs:
       # Astro projects only type-check after their types are generated.
       - run: vp run -r sync
       - run: vp check
+      - run: vp run design:lint
       - run: vp run --filter @kodlab/kerna-components typecheck
       # core's test script enforces the 80% coverage threshold.
       - run: vp run -r test
