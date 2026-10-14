@@ -1,0 +1,37 @@
+packages:
+  - apps/*
+  - packages/*
+  - tools/*
+
+catalogMode: prefer
+
+catalog:
+  "@astrojs/check": ^0.9.10
+  "@changesets/cli": ^3.0.3
+  "@commitlint/cli": ^21.2.3
+  "@commitlint/config-conventional": ^21.2.3
+  "@types/node": ^24
+  prettier: ^3.9.10
+  prettier-plugin-astro: ^1.1.1
+  typescript: ^7.0.2
+  vite: npm:@voidzero-dev/vite-plus-core@1.1.0
+  vite-plus: 1.1.0
+overrides:
+  vite@*: "catalog:"
+peerDependencyRules:
+  allowAny:
+    - vite
+  allowedVersions:
+    vite: "*"
+
+# Merged from the EmDash site templates (apps/playground, apps/site).
+# Build scripts: allow only what each runtime needs.
+allowBuilds:
+  esbuild: true
+  sharp: true
+  workerd: false
+
+# Supply-chain hardening: cooldown on brand-new releases (EmDash exempt).
+minimumReleaseAge: 1440
+minimumReleaseAgeExclude:
+  - emdash
