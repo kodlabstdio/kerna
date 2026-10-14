@@ -11,6 +11,7 @@ catalog:
   "@commitlint/cli": ^21.2.3
   "@commitlint/config-conventional": ^21.2.3
   "@types/node": ^24
+  "@vitest/coverage-v8": 5.0.3
   prettier: ^3.9.10
   prettier-plugin-astro: ^1.1.1
   typescript: ^7.0.2
