@@ -21,7 +21,7 @@ jobs:
         with:
           node-version: "24"
           cache: true
-      - run: vp run repo:check
+      - run: node scripts/check-public-files.mjs
       - name: Check PR title
         if: github.event_name == 'pull_request'
         env:

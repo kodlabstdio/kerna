@@ -17,5 +17,9 @@ export default defineConfig({
   },
   run: {
     cache: true,
+    tasks: {
+      // The Git index can change without any source-file change.
+      "repo:check": { command: "node scripts/check-public-files.mjs", cache: false },
+    },
   },
 });
