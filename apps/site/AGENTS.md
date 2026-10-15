@@ -22,7 +22,7 @@ The admin UI is at `http://localhost:4321/_emdash/admin`.
 
 ## Skills
 
-Agent skills are in `.agents/skills/`. Load them when working on specific tasks:
+Local agent skills are in `.agents/skills/` and are not tracked by Git. Load them when working on specific tasks:
 
 - **building-emdash-site** -- Querying content, rendering Portable Text, schema design, seed files, site features (menus, widgets, search, SEO, comments, bylines). Start here.
 - **creating-plugins** -- Building EmDash plugins with hooks, storage, admin UI, API routes, and Portable Text block types.
