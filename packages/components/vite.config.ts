@@ -1,6 +1,7 @@
 import { defineConfig } from "vite-plus";
+import { getViteConfig } from "astro/config";
 
-export default defineConfig({
+const config = defineConfig({
   pack: { entry: ["src/registry.ts"], dts: true },
   run: {
     tasks: {
@@ -10,3 +11,5 @@ export default defineConfig({
     },
   },
 });
+
+export default getViteConfig(config, { root: import.meta.dirname });
