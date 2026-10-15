@@ -1,3 +1,2 @@
-export function fn() {
-  return "Hello, tsdown!";
-}
+export * from "./page.ts";
+export type * from "./schema.ts";
