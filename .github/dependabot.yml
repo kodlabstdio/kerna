@@ -1,0 +1,12 @@
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 3
+    groups:
+      github-actions:
+        patterns: ["*"]
+# GitHub currently documents pnpm support through v10. This workspace uses
+# pnpm 12, so npm lockfile update automation must wait for compatible support.

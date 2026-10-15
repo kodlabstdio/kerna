@@ -41,3 +41,7 @@ dist-ssr
 
 # Test coverage
 coverage
+
+# Founder-only plans, decisions, research and task tracking.
+# apps/docs is the public documentation site and remains tracked.
+/docs/

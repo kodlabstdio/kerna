@@ -1,0 +1,18 @@
+name: Feature request
+description: Discuss a focused change before implementing it.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: Who is affected, and what are they trying to do?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior and alternatives
+      description: Explain how this improves Agent output or the Reviewer's workflow. Include simpler alternatives.
+    validations:
+      required: true
