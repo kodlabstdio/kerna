@@ -2,7 +2,6 @@
 import { getMenuWithCacheHint, getSiteSettingsWithCacheHint } from "emdash";
 import { EmDashHead, EmDashBodyStart, EmDashBodyEnd } from "emdash/ui";
 import { createPublicPageContext } from "emdash/page";
-import LiveSearch from "emdash/ui/search";
 import { resolveStarterSiteIdentity } from "../utils/site-identity";
 
 interface Props {
@@ -11,12 +10,22 @@ interface Props {
   description?: string | null;
   image?: string | null;
   canonical?: string | null;
+  search?: boolean;
   /** Pass content reference for plugin page contributions on content pages */
   content?: { collection: string; id: string; slug?: string | null };
 }
 
-const { title, pageTitle, description, image, canonical, content } =
-  Astro.props;
+const {
+  title,
+  pageTitle,
+  description,
+  image,
+  canonical,
+  content,
+  search = true,
+} = Astro.props;
+// Keep the host's optional search script out of static Kerna Pages.
+const LiveSearch = search ? (await import("emdash/ui/search")).default : null;
 const [settingsResult, menuResult] = await Promise.all([
   getSiteSettingsWithCacheHint(),
   getMenuWithCacheHint("primary"),
@@ -84,7 +93,12 @@ const pageCtx = createPublicPageContext({
             {item.label}
           </a>
         ))}
-        <LiveSearch placeholder="Search..." collections={["posts", "pages"]} />
+        {LiveSearch && (
+          <LiveSearch
+            placeholder="Search..."
+            collections={["posts", "pages"]}
+          />
+        )}
       </nav>
     </header>
 

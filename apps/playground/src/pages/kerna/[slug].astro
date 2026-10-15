@@ -1,0 +1,28 @@
+---
+import { decodeSlug, getEmDashEntry } from "emdash";
+import { Page } from "@kodlab/kerna-components";
+import Base from "../../layouts/Base.astro";
+import { designSystem } from "../../kerna";
+
+const slug = decodeSlug(Astro.params.slug);
+const { entry, error, isPreview, cacheHint } = slug
+  ? await getEmDashEntry("kerna_pages", slug)
+  : { entry: null, error: null, isPreview: false, cacheHint: undefined };
+if (!entry) Astro.response.status = error ? 500 : 404;
+if (cacheHint && Astro.cache?.enabled) Astro.cache.set(cacheHint);
+---
+
+<Base
+  title={entry?.data.title ?? "Page unavailable"}
+  search={false}
+  content={
+    entry ? { collection: "kerna_pages", id: entry.data.id, slug } : undefined
+  }
+>
+  {isPreview && <p role="status">Preview — unpublished changes</p>}
+  {entry ? (
+    <Page page={entry.data.page} designSystem={designSystem} />
+  ) : (
+    <p>This Page is unavailable.</p>
+  )}
+</Base>

@@ -1,0 +1,48 @@
+---
+import type { Block, TokenReference } from "@kodlab/kerna-core";
+import { tokenVariable } from "./tokens";
+
+interface Props {
+  block: Block;
+}
+const { props } = Astro.props.block;
+const token = (field: string) =>
+  props[field]
+    ? `var(${tokenVariable((props[field] as TokenReference).token)})`
+    : undefined;
+---
+
+<section
+  id={props.id}
+  data-kerna-component="Hero"
+  data-variant={props.variant}
+  style={{
+    color: token("foreground"),
+    "background-color": token("background"),
+    "font-family": token("typography"),
+    padding: token("spacing"),
+  }}
+>
+  <div class="copy">
+    <h1>{props.title as string}</h1>
+    {props.description && <p>{props.description as string}</p>}
+  </div>
+</section>
+
+<style>
+  section {
+    overflow-wrap: anywhere;
+  }
+  .copy {
+    max-inline-size: 70ch;
+  }
+  [data-variant="centered"] {
+    text-align: center;
+  }
+  [data-variant="centered"] .copy {
+    margin-inline: auto;
+  }
+  h1 {
+    text-wrap: balance;
+  }
+</style>

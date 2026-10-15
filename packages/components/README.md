@@ -1,7 +1,9 @@
 # @kodlab/kerna-components
 
-Kerna’s built-in Astro Components and rendering package. Components are intended to expose content fields, Variants and Slots through shared registration data, then render Pages using the site’s Design Tokens.
+Kerna’s built-in Astro Components and registration metadata. The current tracer bullet includes Hero (centered and left Variants) and the Page renderer.
 
-This package is unreleased and under development. The full renderer and stable Component API are not yet available on `main`.
+Import `Page` from `@kodlab/kerna-components` to validate and render a stored Page. Import `components` from `@kodlab/kerna-components/registry` for the framework-independent registration metadata; this compiled entry also works in the host’s Astro config. `tokenVariable(name)` exposes the CSS custom property name for a Design Token.
 
-See the root [contribution guide](../../CONTRIBUTING.md) for setup and boundaries. Source lives in `src/`, and `index.ts` exports the public Astro entry. Generate Astro types with `vp run -r sync` before checking the workspace. Run `vp run ready` from the repository root for the shared validation suite.
+See [the plugin install instructions](../plugin/README.md) for the shared Design System and host route.
+
+From the repository root, run `vp run @kodlab/kerna-components#test`, `vp run @kodlab/kerna-components#typecheck` or `vp run @kodlab/kerna-components#build`.
