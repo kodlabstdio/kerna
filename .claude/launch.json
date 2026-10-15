@@ -1,0 +1,19 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "brand-sample",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "4410",
+        "--bind",
+        "127.0.0.1",
+        "--directory",
+        "docs/design"
+      ],
+      "port": 4410
+    }
+  ]
+}

@@ -254,8 +254,9 @@ Sizes step down by roughly 1.4: display 64px, headline 40px and 28px, title and 
 - **The frame:** content sits in a 1152px column bounded by 1px dotted `rail` lines on both sides, running the full page height. Sections are separated by dashed `rail` dividers that stop at the rails.
 - **Rhythm:** sections are 96px apart (`2xl`), cards 16px (`md`) apart, card padding 24px.
 - **Hero:** a full-width graphite stage with the nav floating above it. A dark circle sits above the stage with only its rim showing, and the heat ramp glows down from that rim, hottest at the edge and coldest furthest away. Below it: the chrome "kerna" wordmark lit from above, a centred two-tone headline, one sentence and two buttons. The final call to action uses the same stage.
+- **Hero product frame:** shows a Proposal under review (outline with Agent dots, the preview with the Agent's additions marked, and the Operations with Accept and Reject), because that is what only Kerna does. Below 640px it shows the Operations alone. Customer Pages depicted inside product frames may carry their own type over their own heat art; that is their brand, not ours.
 - **Bento grids:** 3 columns on desktop, 2 on tablet, 1 on phones; one card per grid may span two columns and carry the section's heat art.
-- **Footer:** a giant Kerna wordmark in `rail` grey, then links in mono.
+- **Footer:** link columns in Geist, then a giant Kerna wordmark in `rail` grey.
 
 ## Elevation & Depth
 
@@ -268,10 +269,11 @@ Soft but not bubbly: `md` (10px) for label cards and code, `lg` (16px) for bento
 ## Components
 
 - **Nav pill:** floating, centred, white with the rail as its border; the wordmark on the left, three links, and one primary button.
+- **Install block:** the page's one conversion action, used in the hero and the final stage: a graphite panel with a package-manager switch and two copyable commands (Site, Agent). Every "Install" link leads to it.
 - **Two-tone headline:** see Typography. At most one phrase per page gets the `highlight` marker: ultramarine fill, white text, 6px radius.
-- **Label card:** the packaging's white label. It carries a Component's name, a mono key-value list and an ultramarine numeral, and it is the only way text appears over heat art.
+- **Label card:** the packaging's white label. It carries a Page's name, a mono key-value list, and an ultramarine figure with its own label (for example "13/14 changes accepted"); an unlabelled number reads as a mystery score. It is the only way text appears over heat art.
 - **Bento card:** silver, 16px radius, a short title and a muted caption, and a product moment (outline, Proposal diff, token picker) rendered in the admin's own look.
-- **Stats:** an ultramarine numeral, a mono label under it, nothing else.
+- **Stats:** an ultramarine numeral and one plain sentence under it. Stats prove a benefit (0 KB of JavaScript, $0 of AI usage, 1 prompt); never list limits.
 - **Heat ribbon:** the main background art. One soft, curving band of light over graphite, built like a thermal cross-section: cold and wide at the edges (`heat-0`), hot and thin at the core (`heat-6`, then a white line), heavily blurred, with fine monochrome grain on top so it never bands. It holds still. Place it so it passes beside or below text, never behind it.
 - **Heat legend:** seven solid swatches with mono labels, like a thermal camera's scale; used for the Design Token story.
 - **Chrome art:** the full "kerna" wordmark (never a single letter) and Component icons rendered as liquid metal, catching the heat glow on their top edges and a cold ultramarine reflection underneath. They ship as static AVIF and WebP images in light and dark versions; only the hero runs one live shader island, which shows the static image when the visitor prefers reduced motion.
@@ -286,6 +288,9 @@ Soft but not bubbly: `md` (10px) for label cards and code, `lg` (16px) for bento
 - **Do** make the hero's main action the real install command with a copy button, not a link to it.
 - **Do** theme the browser's own surfaces: ultramarine text selection and caret, rail-coloured scrollbars, tabular numerals.
 - **Don't** put small labels or kickers above headings; the two-tone headline carries the section.
+- **Do** write marketing copy in plain words. Of Kerna's product terms, only Agent, Proposal and Design System appear before they are explained.
+- **Do** use `primary-on-stage` for focus rings on graphite stages (ultramarine is under 3:1 there), and give every control at least 44px of tap target below 640px.
+- **Do** keep a menu for the nav links on phones; never hide navigation without one.
 - **Do** keep the rails and dividers 1px and quiet; they frame, they never decorate.
 - **Don't** use any accent colour other than ultramarine, or put the heat ramp in text, links or buttons.
 - **Don't** use the heat ramp out of order or as separate decorative colours; it is one cold-to-hot gradient.
