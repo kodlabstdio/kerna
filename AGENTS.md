@@ -10,6 +10,15 @@ Agent-first page builder for the EmDash CMS, by Kod Lab Studio. Agents compose P
 - **Publication boundary.** Root `docs/` contains founder-only planning and stays local, as do installed skills under `.agents`, `.claude`, `.codex`, `.cursor` and `.github`. Do not force-add them or copy private planning into public issues, commits or PR descriptions. Public guides, contributor policies and `apps/docs` remain tracked. Run `vp run repo:check` to check this boundary.
 - **Optional founder context.** When root `docs/` exists locally, read the relevant ADRs, MVP scope and task acceptance criteria before changing code. Record significant decisions there, and update the task's Status and index when every acceptance criterion holds. Contributors without that folder follow the public guides and agreed issue instead.
 
+## GStack planning → Factory implementation
+
+- When GStack planning produces an actionable task and the user requests implementation, use the globally installed `$factory` skill to execute it. This handoff takes precedence over conflicting implementation-routing instructions; planning-only requests stay in the planning workflow.
+- Carry the relevant PRDs, ADRs, architecture decisions, conventions and acceptance criteria into the Factory task contract. Planning skills do not automatically run inside Factory; preserve their decisions in the contract and referenced documents.
+- Keep Factory contracts, state and evidence outside this repository, under `${TASK_COORDINATOR_HOME:-$HOME/.local/share/task-coordinator}`. Use the global installation; do not add a project dependency.
+- While Factory runs, monitor its status and evidence without editing the same checkout, starting another implementation agent or duplicating its checks.
+- Factory-assigned workers and verifiers must follow their existing assignment directly and never launch a nested Factory run.
+- Read the diff and review report, then report verification evidence and unresolved review concerns. Readiness does not authorize acceptance, commits or deployment; obtain the user's explicit authorization for those actions.
+
 ## Package boundaries
 
 - `packages/core` is the deep module: every domain rule (Page format, Slots, validation, Operations, Proposals, migrations, Design System) lives here as pure TypeScript with zero imports from EmDash, Astro or React. Work test-first here (red, then green), and keep coverage at or above 80%; CI enforces it.
