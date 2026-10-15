@@ -4,3 +4,5 @@
 import MyComponent from "./src/MyComponent.astro";
 
 export default MyComponent;
+
+export { components, hero } from "./src/registry.ts";

@@ -31,6 +31,15 @@ export interface ComponentDefinition {
 
 export type ComponentRegistry = Record<string, ComponentDefinition>;
 
+export interface ComponentRegistration extends ComponentDefinition {
+  name: string;
+}
+
+export interface DesignSystem {
+  tokens: DesignTokens;
+  components: Record<string, string[]>;
+}
+
 export interface Block {
   type: string;
   props: {

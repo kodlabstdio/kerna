@@ -12,16 +12,20 @@
   ],
   "type": "module",
   "exports": {
-    ".": "./index.ts"
+    ".": "./index.ts",
+    "./registry": "./src/registry.ts"
   },
   "scripts": {
-    "sync": "astro sync",
-    "typecheck": "astro check"
+    "sync": "astro sync"
+  },
+  "dependencies": {
+    "@kodlab/kerna-core": "workspace:*"
   },
   "devDependencies": {
     "@astrojs/check": "catalog:",
     "astro": "^7.3.8",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "vite-plus": "catalog:"
   },
   "peerDependencies": {
     "astro": "^7.0.0"
