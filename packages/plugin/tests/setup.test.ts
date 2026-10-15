@@ -59,3 +59,38 @@ test("an incompatible existing field produces a repairable error without overwri
   await expect(setupKerna()).rejects.toThrow("page");
   expect(createField).not.toHaveBeenCalled();
 });
+
+test.each(["drafts", "revisions", "preview"])(
+  "missing %s support rejects setup before any schema writes",
+  async (missing) => {
+    vi.mocked(fetchCollections).mockResolvedValue([
+      {
+        slug: "kerna_pages",
+        supports: ["drafts", "revisions", "preview"].filter((support) => support !== missing),
+      },
+    ] as Awaited<ReturnType<typeof fetchCollections>>);
+    await expect(setupKerna()).rejects.toThrow(
+      "The kerna_pages collection needs drafts, revisions and preview enabled in EmDash's schema settings. Then retry setup.",
+    );
+    expect(fetchFields).not.toHaveBeenCalled();
+    expect(createCollection).not.toHaveBeenCalled();
+    expect(createField).not.toHaveBeenCalled();
+  },
+);
+
+test.each([
+  { slug: "title", type: "string" },
+  { slug: "page", type: "json" },
+])("a nonrequired $slug field rejects setup before creating missing fields", async (field) => {
+  vi.mocked(fetchCollections).mockResolvedValue([
+    { slug: "kerna_pages", supports: ["drafts", "revisions", "preview"] },
+  ] as Awaited<ReturnType<typeof fetchCollections>>);
+  vi.mocked(fetchFields).mockResolvedValue([{ ...field, required: false }] as Awaited<
+    ReturnType<typeof fetchFields>
+  >);
+  await expect(setupKerna()).rejects.toThrow(
+    `The kerna_pages.${field.slug} field must be a required ${field.type} field. Correct it in EmDash's schema settings, then retry setup.`,
+  );
+  expect(createCollection).not.toHaveBeenCalled();
+  expect(createField).not.toHaveBeenCalled();
+});
