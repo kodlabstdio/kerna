@@ -5,6 +5,20 @@
 
 import type { BylineSummary, ContentBylineCredit, TaxonomyTerm, PortableTextBlock } from "emdash";
 
+export interface KernaPage {
+  id: string;
+  slug: string | null;
+  status: string;
+  title: string;
+  page: unknown;
+  createdAt: Date;
+  updatedAt: Date;
+  publishedAt: Date | null;
+  byline?: BylineSummary | null;
+  bylines?: ContentBylineCredit[];
+  terms?: Record<string, TaxonomyTerm[]>;
+}
+
 export interface Page {
   id: string;
   slug: string | null;
@@ -68,6 +82,7 @@ export interface Post {
 
 declare module "emdash" {
   interface EmDashCollections {
+    kerna_pages: KernaPage;
     pages: Page;
     posts: Post;
   }

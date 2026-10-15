@@ -4,26 +4,38 @@
   "description": "Kerna: the agent-first page builder plugin for EmDash.",
   "license": "MIT",
   "files": [
-    "dist"
+    "dist",
+    "src/admin"
   ],
   "type": "module",
   "exports": {
     ".": "./dist/index.mjs",
+    "./admin": "./src/admin/index.tsx",
     "./package.json": "./package.json"
   },
   "publishConfig": {
     "access": "public"
   },
   "scripts": {
-    "build": "vp pack",
     "dev": "vp pack --watch",
-    "test": "vp test",
     "check": "vp check",
     "prepublishOnly": "vp run build"
   },
+  "dependencies": {
+    "@kodlab/kerna-components": "workspace:*",
+    "@kodlab/kerna-core": "workspace:*"
+  },
   "devDependencies": {
     "@types/node": "catalog:",
+    "@types/react": "^19.2.14",
     "typescript": "catalog:",
     "vite-plus": "catalog:"
+  },
+  "peerDependencies": {
+    "@cloudflare/kumo": "2.6.0",
+    "@emdash-cms/admin": "^1.2.0",
+    "@emdash-cms/auth": "^1.2.0",
+    "emdash": "^1.2.0",
+    "react": "^19.0.0"
   }
 }

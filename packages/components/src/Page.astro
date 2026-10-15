@@ -1,0 +1,29 @@
+---
+import {
+  getEnabledComponents,
+  readPage,
+  type DesignSystem,
+} from "@kodlab/kerna-core";
+import { components } from "./registry";
+import { tokenDeclarations } from "./tokens";
+import Hero from "./Hero.astro";
+
+interface Props {
+  page: unknown;
+  designSystem: DesignSystem;
+}
+const { page, designSystem } = Astro.props;
+const result = readPage(
+  page,
+  getEnabledComponents(components, designSystem),
+  designSystem.tokens,
+);
+const declarations = tokenDeclarations(designSystem.tokens);
+---
+
+<style is:inline set:html={`:root{${declarations}}`} />
+{result.ok ? (
+  result.page.content.map((block) => <Hero block={block} />)
+) : (
+  <p>This Page is unavailable.</p>
+)}

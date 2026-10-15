@@ -7,13 +7,14 @@
   ],
   "license": "MIT",
   "files": [
+    "dist",
     "src",
     "index.ts"
   ],
   "type": "module",
   "exports": {
     ".": "./index.ts",
-    "./registry": "./src/registry.ts"
+    "./registry": "./dist/registry.mjs"
   },
   "scripts": {
     "sync": "astro sync"
