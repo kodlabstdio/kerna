@@ -1,3 +1,4 @@
+/// <reference types="node" />
 import { expect, onTestFinished, test } from "vite-plus/test";
 import { createServer } from "node:http";
 import { rm } from "node:fs/promises";
@@ -177,16 +178,7 @@ test("native publication and preview keep drafts out of anonymous responses", as
         expectMainContent(html, slug!, expected!);
         expect(html).toContain("<header>");
         expect(html).toContain("<main>");
-        const scripts = [...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)];
-        for (const script of scripts) {
-          expect(script[1]).toMatch(/\btype=["']application\/ld\+json["']/i);
-          expect(script[1]).not.toMatch(/\bsrc\s*=/i);
-          expect(() => JSON.parse(script[2]!)).not.toThrow();
-        }
-        const markup = html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "");
-        expect(markup).not.toMatch(
-          /<script\b|<astro-island\b|\bclient:|\son\w+\s*=|(?:javascript|vbscript)\s*:/i,
-        );
+        expectStaticHtml(html);
         expect(html).not.toContain("PRIVATE");
       }
     } finally {
@@ -215,6 +207,96 @@ function expectMainContent(html: string, slug: string, expected: string) {
     expect(main).not.toContain("data-kerna-component");
   }
 }
+
+function expectStaticHtml(html: string) {
+  // Inspect original spans; only a validated JSON-LD body is exempt from markup checks.
+  const forbiddenMarkup = /<astro-island\b|\bclient:|\son\w+\s*=|(?:javascript|vbscript)\s*:/i;
+  const scripts = /<\/?script\b/gi;
+  let cursor = 0;
+  let script: RegExpExecArray | null;
+  while ((script = scripts.exec(html))) {
+    expect(html.slice(cursor, script.index)).not.toMatch(forbiddenMarkup);
+    // The fixture emits only this shape. Reject extra/duplicate attributes,
+    // including src and misleading data-type attributes, rather than guessing.
+    const opening = html
+      .slice(script.index)
+      .match(
+        /^<script[\t\n\f\r ]+type[\t\n\f\r ]*=[\t\n\f\r ]*(["'])application\/ld\+json\1[\t\n\f\r ]*>/i,
+      );
+    expect(opening).not.toBeNull();
+    const bodyStart = script.index + opening![0].length;
+    const closing = /<\/script\b/gi;
+    closing.lastIndex = bodyStart;
+    const end = closing.exec(html);
+    expect(end).not.toBeNull();
+    const boundary = html.slice(end!.index).match(/^<\/script[\t\n\f\r ]*>/i);
+    expect(boundary).not.toBeNull();
+    const body = html.slice(bodyStart, end!.index);
+    // HTML comment escapes can change how browsers recognize script boundaries.
+    expect(body).not.toContain("<!--");
+    expect(() => JSON.parse(body)).not.toThrow();
+    cursor = end!.index + boundary![0].length;
+    scripts.lastIndex = cursor;
+  }
+  expect(html.slice(cursor)).not.toMatch(forbiddenMarkup);
+}
+
+const jsonLd = '<script type="application/ld+json">{"name":"Page"}</script>';
+
+test.each([
+  ["plain static HTML", "<main><h1>Static Hero</h1></main>"],
+  ["JSON-LD", jsonLd],
+  ["multiple JSON-LD scripts", `${jsonLd}<main>Page</main>${jsonLd}`],
+  ["whitespace closing tag", '<script type="application/ld+json">{}</script \n\t>'],
+  ["case and attribute whitespace", "<SCRIPT\nTYPE = 'application/ld+json' >{}</SCRIPT>"],
+  [
+    "script-looking JSON strings",
+    '<script type="application/ld+json">{"text":"<script>example <astro-island> client:load onclick= javascript: vbscript: <\\/script>"}</script>',
+  ],
+])("static HTML assertion accepts %s", (_name, html) => {
+  expect(() => expectStaticHtml(html)).not.toThrow();
+});
+
+test.each([
+  ["inline script", "<script>alert(1)</script>"],
+  ["inline script with whitespace closing tag", "<script>alert(1)</script >"],
+  ["external script", '<script src="/client.js"></script>'],
+  ["external JSON-LD", '<script type="application/ld+json" src="/client.js">{}</script>'],
+  ["boolean src", '<script type="application/ld+json" src>{}</script>'],
+  ["misleading data-type", '<script data-type="application/ld+json">{}</script>'],
+  ["type inside another attribute", `<script title='type="application/ld+json"'>{}</script>`],
+  ["duplicate type", '<script type="text/javascript" type="application/ld+json">{}</script>'],
+  [
+    "reversed duplicate type",
+    '<script type="application/ld+json" type="text/javascript">{}</script>',
+  ],
+  ["mismatched quotes", `<script type="application/ld+json'>{}</script>`],
+  ["missing opening boundary", '<script type="application/ld+json" {} </script>'],
+  ["missing closing tag", '<script type="application/ld+json">{}'],
+  ["incomplete closing tag", '<script type="application/ld+json">{}</script'],
+  ["closing tag attributes", '<script type="application/ld+json">{}</script extra>'],
+  ["self-closing script", '<script type="application/ld+json"/>'],
+  ["stray closing tag", "<main></script ></main>"],
+  ["stray opening tag", "<script"],
+  ["invalid JSON", '<script type="application/ld+json">alert(1)</script>'],
+  ["empty JSON", '<script type="application/ld+json"></script>'],
+  [
+    "literal closing tag in JSON",
+    '<script type="application/ld+json">{"text":"</script >"}</script>',
+  ],
+  ["HTML script escape", '<script type="application/ld+json">{"text":"<!--<script>"}</script>'],
+  ["executable script after JSON-LD", `${jsonLd}<script>alert(1)</script >`],
+  ["Astro island", "<astro-island></astro-island>"],
+  ["client directive", '<div client:load="true"></div>'],
+  ["event handler", '<img onerror = "alert(1)">'],
+  ["JavaScript URL", '<a href="javascript:alert(1)">Link</a>'],
+  ["VBScript URL", '<a href="VBSCRIPT :msgbox(1)">Link</a>'],
+])("static HTML assertion rejects %s", (_name, html) => {
+  expect(() => expectStaticHtml(html)).toThrow();
+  // Check both sides of an allowed body so skipping JSON cannot hide markup.
+  expect(() => expectStaticHtml(`${jsonLd}${html}`)).toThrow();
+  expect(() => expectStaticHtml(`${html}${jsonLd}`)).toThrow();
+});
 
 test("production assertion rejects a title without the Hero inside main", () => {
   expect(() =>
