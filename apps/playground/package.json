@@ -21,7 +21,8 @@
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
-    "@types/node": "catalog:"
+    "@types/node": "catalog:",
+    "typescript": "^6.0.3"
   },
   "emdash": {
     "label": "Starter",

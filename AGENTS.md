@@ -22,7 +22,7 @@ Agent-first page builder for the EmDash CMS, by Kod Lab Studio. Agents compose P
 
 - Node 24 (`.nvmrc`); Vite+ rejects Node 25.
 - On a fresh clone run `vp run -r sync` before `vp check`: Astro projects only type-check after their types are generated.
-- `packages/components` is type-checked by `astro check`, outside root lint, because plain TypeScript can't resolve `.astro` imports. `astro check` needs TypeScript 6, so that package pins it while the rest of the repo uses the TypeScript 7 catalog.
+- `.astro` files are type-checked by `astro check`, outside root lint. `astro check` needs TypeScript 6, so `packages/components`, `apps/site` and `apps/playground` pin it while the rest of the repo uses the TypeScript 7 catalog. `vp run -r typecheck` checks all three.
 - `.astro` files are formatted by Prettier until Vite+ bundles oxfmt ≥ 0.73 (ADR-0007).
 - `astro dev` (Astro 7) keeps running in the background; stop it with `astro dev stop` from the app folder.
 - Commit messages are conventional commits with a required scope; allowed scopes live in `commitlint.config.js`.
