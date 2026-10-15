@@ -16,7 +16,7 @@ Kerna is being built so your own Agent, running in Claude Code or Codex, can com
 - EmDash owns content, permissions, revisions, preview and publishing. Kerna runs as a native plugin.
 - Agents use the model in their own tools. Kerna does not run or bill for LLM inference.
 
-For the current integration, see the [plugin guide](packages/plugin/README.md). That guide describes the development snapshot; install from this repository until packages are released.
+Package-specific development notes live in the [plugin README](packages/plugin/README.md). Integration examples evolve alongside the implementation; use this repository until packages are released.
 
 ## Development
 
