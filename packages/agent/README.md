@@ -1,6 +1,10 @@
 # @kodlab/kerna-agent
 
-A starter for creating a Vite Plus project.
+The package for Kerna's Agent Skill, Claude Code plugin and Codex configuration. These integrations are under development and not yet available for use.
+
+Agents will connect from their own tools and submit Proposals through Kerna's MCP tools. This package does not provide an LLM runtime or inference service.
+
+See the root [contribution guide](../../CONTRIBUTING.md) for repository setup and package boundaries.
 
 ## Development
 
@@ -19,5 +23,5 @@ vp test
 - Build the library:
 
 ```bash
-vp pack
+vp run build
 ```
