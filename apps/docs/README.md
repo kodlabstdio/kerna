@@ -1,49 +1,42 @@
-# Starlight Starter Kit: Basics
+# Kerna documentation
 
-[![Built with Starlight](https://astro.badg.es/v2/built-with-starlight/tiny.svg)](https://starlight.astro.build)
+Public developer guides and API reference, built with Astro and Starlight.
 
-```
-pnpm create astro@latest -- --template starlight
-```
+## Run locally
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+Use Node 24 (`.nvmrc`) and Vite+. From the repository root:
 
-## 🚀 Project Structure
-
-Inside of your Astro + Starlight project, you'll see the following folders and files:
-
-```
-.
-├── public/
-├── src/
-│   ├── assets/
-│   ├── content/
-│   │   └── docs/
-│   └── content.config.ts
-├── astro.config.mjs
-├── package.json
-└── tsconfig.json
+```bash
+nvm use
+vp install
+vp run -r sync
+vp run docs#dev
 ```
 
-Starlight looks for `.md` or `.mdx` files in the `src/content/docs/` directory. Each file is exposed as a route based on its file name.
+Open the local URL printed by Astro. From the repository root, build the docs:
 
-Images can be added to `src/assets/` and embedded in Markdown with a relative link.
+```bash
+vp run docs#build
+```
 
-Static assets, like favicons, can be placed in the `public/` directory.
+Build output is in `apps/docs/dist`. Astro 7 keeps its dev server running in the
+background. From `apps/docs`, stop it with `vp exec astro dev stop`.
 
-## 🧞 Commands
+## Write a page
 
-All commands are run from the root of the project, from a terminal:
+Content lives in `src/content/docs/guides` and `src/content/docs/reference`.
+Use Markdown frontmatter for the title and description; add the page to the
+explicit sidebar in `astro.config.mjs`.
 
-| Command                | Action                                           |
-| :--------------------- | :----------------------------------------------- |
-| `pnpm install`         | Installs dependencies                            |
-| `pnpm dev`             | Starts local dev server at `localhost:4321`      |
-| `pnpm build`           | Build your production site to `./dist/`          |
-| `pnpm preview`         | Preview your build locally, before deploying     |
-| `pnpm astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `pnpm astro -- --help` | Get help using the Astro CLI                     |
+- Give each guide one reader task. Keep lookup details in reference pages.
+- Use exact API names and the [project vocabulary](../../CONTEXT.md).
+- Write direct verbs, descriptive headings and links that name their destination.
+- Put prerequisites and command directories before commands.
+- Show expected results and explain how to recover from errors.
 
-## 👀 Want to learn more?
+The complete executable Proposal example lives only in
+[Create your first Proposal](src/content/docs/guides/first-proposal.md).
+Core tests execute its JavaScript and check its expected JSON through the built
+package root. Keep both code fences complete when editing it.
 
-Check out [Starlight’s docs](https://starlight.astro.build/), read [the Astro documentation](https://docs.astro.build), or jump into the [Astro Discord server](https://astro.build/chat).
+See the [contribution guide](../../CONTRIBUTING.md) for repository-wide checks.
