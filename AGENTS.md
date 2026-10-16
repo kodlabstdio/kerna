@@ -25,6 +25,32 @@ Agent-first page builder for the EmDash CMS, by Kod Lab Studio. Agents compose P
 - Factory-assigned workers and verifiers must follow their existing assignment directly and never launch a nested Factory run.
 - Read the diff and review report, then report verification evidence and unresolved review concerns. Readiness does not authorize acceptance, commits or deployment; obtain the user's explicit authorization for those actions.
 
+## Task execution with Factory
+
+After planning, use `$factory` to choose the smallest suitable workflow.
+Briefly state the route and reason, then proceed within existing authorization.
+
+- Documentation, wording, and straightforward mechanical edits: edit directly,
+  review the diff, and perform only relevant authorized checks.
+- Clear implementation: use `factory implement <task.json>` for one coding
+  pass and declared verification. Review the result in the caller.
+- Architectural uncertainty or unresolved requirements: use the relevant
+  GStack planning/research skill first, then implement.
+- Existing implementation needing verification: use `factory reverify`
+  with an explicitly authorized budget.
+- Use the full `factory start` workflow or Harness² only when explicitly
+  requested or already authorized for this task. Harness² requires
+  refinement authorization, depth, and a total budget.
+
+Route by behavior and risk, not file extension. Preserve existing work,
+checkout reservations, and frozen acceptance criteria. Inspect prior runs
+before continuing; use `continue ... --bounded` for an authorized additional
+coding pass.
+
+Never silently renew budgets, escalate workflows, weaken checks, or claim
+unperformed verification. Keep summaries concise. Acceptance, commits,
+and pushes require the user's explicit instructions
+
 ## Package boundaries
 
 - `packages/core` is the deep module: every domain rule (Page format, Slots, validation, Operations, Proposals, migrations, Design System) lives here as pure TypeScript with zero imports from EmDash, Astro or React. Work test-first here (red, then green), and keep coverage at or above 80%; CI enforces it.
