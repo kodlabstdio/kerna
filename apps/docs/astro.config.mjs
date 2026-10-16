@@ -6,19 +6,23 @@ import starlight from "@astrojs/starlight";
 export default defineConfig({
   integrations: [
     starlight({
-      title: "My Docs",
-      social: [{ icon: "github", label: "GitHub", href: "https://github.com/withastro/starlight" }],
+      title: "Kerna",
+      social: [{ icon: "github", label: "GitHub", href: "https://github.com/kodlabstdio/kerna" }],
       sidebar: [
         {
           label: "Guides",
           items: [
-            // Each item here is one entry in the navigation menu.
-            { label: "Example Guide", slug: "guides/example" },
+            { label: "Create your first Proposal", slug: "guides/first-proposal" },
+            { label: "Save Proposal decisions safely", slug: "guides/persist-proposal-decisions" },
           ],
         },
         {
           label: "Reference",
-          items: [{ autogenerate: { directory: "reference" } }],
+          items: [
+            { label: "Proposal API", slug: "reference/proposals" },
+            { label: "Operations", slug: "reference/operations" },
+            { label: "Resolve Proposal errors", slug: "reference/proposal-errors" },
+          ],
         },
       ],
     }),

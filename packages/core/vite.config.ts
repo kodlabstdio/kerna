@@ -1,6 +1,12 @@
 import { defineConfig } from "vite-plus";
 
 export default defineConfig({
+  run: {
+    tasks: {
+      build: { command: "vp pack", cache: false },
+      test: { command: "vp test run --coverage", dependsOn: ["build"], cache: false },
+    },
+  },
   pack: {
     dts: {
       tsgo: {},

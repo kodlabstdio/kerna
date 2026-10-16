@@ -10,6 +10,12 @@ Agent-first page builder for the EmDash CMS, by Kod Lab Studio. Agents compose P
 - **Publication boundary.** Root `docs/` contains founder-only planning and stays local, as do installed skills under `.agents`, `.claude`, `.codex`, `.cursor` and `.github`. Do not force-add them or copy private planning into public issues, commits or PR descriptions. Public guides, contributor policies and `apps/docs` remain tracked. Run `vp run repo:check` to check this boundary.
 - **Optional founder context.** When root `docs/` exists locally, read the relevant ADRs, MVP scope and task acceptance criteria before changing code. Record significant decisions there, and update the task's Status and index when every acceptance criterion holds. Contributors without that folder follow the public guides and agreed issue instead.
 
+## Git workflow
+
+- Work in the main project folder on a new branch for each feature, change or task. Add follow-up fixes as commits on that same branch; do not create additional worktrees unless the user explicitly requests one.
+- When a requested worktree is no longer needed, stop its owned processes, preserve uncommitted work and unique commits, then remove it promptly. Keep private recovery archives outside tracked files.
+- Resolve Factory setup or reservation problems in the existing checkout; do not create another worktree as a workaround.
+
 ## GStack planning → Factory implementation
 
 - When GStack planning produces an actionable task and the user requests implementation, use the globally installed `$factory` skill to execute it. This handoff takes precedence over conflicting implementation-routing instructions; planning-only requests stay in the planning workflow.
