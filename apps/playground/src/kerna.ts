@@ -8,3 +8,20 @@ export const designSystem = createDesignSystem(components, {
   body: { type: "typography", value: "Georgia, serif" },
   section: { type: "spacing", value: "clamp(1.5rem, 6vw, 5rem)" },
 });
+
+// Starting values are trusted site configuration, never supplied by a request.
+export const presets = {
+  Hero: {
+    type: "Hero",
+    props: {
+      id: "hero",
+      variant: "centered",
+      title: "A clear welcome",
+      description: "Introduce what this Page offers.",
+      foreground: { token: "ink" },
+      background: { token: "paper" },
+      typography: { token: "body" },
+      spacing: { token: "section" },
+    },
+  },
+};

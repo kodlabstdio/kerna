@@ -5,12 +5,17 @@
   "license": "MIT",
   "files": [
     "dist",
-    "src/admin"
+    "src/admin",
+    "src/astro",
+    "src/preview"
   ],
   "type": "module",
   "exports": {
     ".": "./dist/index.mjs",
     "./admin": "./src/admin/index.tsx",
+    "./astro": "./src/astro/index.ts",
+    "./astro/runtime": "./src/astro/runtime.ts",
+    "./preview": "./src/admin/preview-channel.ts",
     "./package.json": "./package.json"
   },
   "publishConfig": {
@@ -23,9 +28,11 @@
   },
   "dependencies": {
     "@kodlab/kerna-components": "workspace:*",
-    "@kodlab/kerna-core": "workspace:*"
+    "@kodlab/kerna-core": "workspace:*",
+    "@puckeditor/core": "0.23.0"
   },
   "devDependencies": {
+    "@tanstack/react-router": "1.163.2",
     "@types/node": "catalog:",
     "@types/react": "^19.2.14",
     "typescript": "catalog:",
@@ -35,7 +42,14 @@
     "@cloudflare/kumo": "2.6.0",
     "@emdash-cms/admin": "^1.2.0",
     "@emdash-cms/auth": "^1.2.0",
+    "@tanstack/react-router": "1.163.2",
+    "astro": "^7.0.0",
     "emdash": "^1.2.0",
     "react": "^19.0.0"
+  },
+  "peerDependenciesMeta": {
+    "astro": {
+      "optional": true
+    }
   }
 }

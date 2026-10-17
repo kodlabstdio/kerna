@@ -43,7 +43,26 @@ function retainedPagePipeline(data: Record<string, unknown> | null) {
 test("the native descriptor is serializable and the loader can instantiate it", () => {
   const descriptor = kerna();
   expect(JSON.parse(JSON.stringify(descriptor))).toEqual(descriptor);
+  expect(descriptor.adminPages).toEqual([
+    { path: "/setup", label: "Kerna", icon: "squares-four" },
+    { path: "/editor", label: "Edit Pages", icon: "article" },
+  ]);
   expect(createPlugin(descriptor.options).id).toBe(descriptor.id);
+});
+
+test("the private editor configuration route is Editor-only and server-owned", () => {
+  const plugin = createPlugin({
+    presets: {
+      Hero: { type: "Hero", props: { id: "site", variant: "centered", title: "Welcome" } },
+    },
+  });
+  expect(plugin.routes.config).toMatchObject({
+    methods: ["GET"],
+    permission: "schema:read",
+    request: { body: "none" },
+  });
+  expect(plugin.routes.config.public).not.toBe(true);
+  expect(plugin.routes.config.handler).toBeTypeOf("function");
 });
 
 test("valid Pages and unrelated content pass through the production hook pipeline", async () => {

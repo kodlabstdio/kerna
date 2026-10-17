@@ -6,6 +6,26 @@ import { fileURLToPath } from "node:url";
 
 const playground = fileURLToPath(new URL("../", import.meta.url));
 
+function fixtureEnvironment() {
+  const env = { ...process.env };
+  // Vitest exports DEV=1/PROD=""/MODE=test. Astro's private-env transform
+  // would inline those strings before Vite's production booleans, silently
+  // removing production-only auth/CSP branches from a real host build.
+  for (const key of [
+    "DEV",
+    "PROD",
+    "MODE",
+    "BASE_URL",
+    "SSR",
+    "VITEST",
+    "VITEST_MODE",
+    "VITEST_POOL_ID",
+    "VITEST_WORKER_ID",
+  ])
+    delete env[key];
+  return env;
+}
+
 // Register with the runner before asynchronous work; closing also rejects late work.
 export function createLifecycle() {
   const stops = new Set();
@@ -66,14 +86,50 @@ async function fixtureConfig() {
   return config.replace("emdash({", "emdash({\n      fonts: false,\n      updateCheck: false,");
 }
 
-export async function startHost(root, production = false, lifecycle = createLifecycle()) {
+export async function startHost(root, production = false, lifecycle = createLifecycle(), port = 0) {
+  // Public fixture fonts only. This is host HTTP configuration, never private
+  // preview/API CORS. The Node standalone adapter does not add it itself.
+  const fontHeaders = `function fontHeaders(request, response) {
+    const path = new URL(request.url, 'http://localhost').pathname;
+    if (/^\\/(?:src\\/assets\\/proof\\.ttf|_astro\\/proof\\.[\\w-]+\\.ttf)$/.test(path))
+      response.setHeader('Access-Control-Allow-Origin', '*');
+  }`;
   const script = production
     ? `const {startServer}=await import('./dist/server/entry.mjs');
        const host=startServer();
+       ${fontHeaders}
+       host.server.server.prependListener('request', fontHeaders);
        host.server.server.on('listening',()=>console.log('FIXTURE_ORIGIN=http://127.0.0.1:'+host.server.server.address().port));
        process.on('SIGTERM',async()=>{await host.server.stop();process.exit()});`
     : `const {dev}=await import(${JSON.stringify(resolve(playground, "node_modules/astro/dist/core/index.js"))});
-       const server=await dev({root:process.cwd(),server:{host:'127.0.0.1',port:0}});
+       const {readFile}=await import('node:fs/promises');
+       ${fontHeaders}
+       const server=await dev({root:process.cwd(),server:{host:'127.0.0.1',port:${port}},
+         vite:{plugins:[{name:'fixture-public-fonts',configureServer(server){
+           // Astro's dev Fetch Metadata boundary denies opaque-origin assets.
+           // Deliver these two explicitly public fixture files before that
+           // boundary, without exposing source modules or changing its policy.
+           const http=server.httpServer;
+           const handlers=http.listeners('request');
+           for(const handler of handlers) http.removeListener('request',handler);
+           http.on('request',async(req,res)=>{
+             const next=()=>{for(const handler of handlers) handler.call(http,req,res)};
+             const path=new URL(req.url,'http://localhost').pathname;
+             const files=new Map([
+               ['/@fs'+process.cwd()+'/src/assets/proof.svg',['proof.svg','image/svg+xml']],
+               ['/src/assets/proof.ttf',['proof.ttf','font/ttf']],
+             ]);
+             const file=files.get(path);
+             if(!file || !['GET','HEAD'].includes(req.method)) return next();
+             try {
+               const bytes=await readFile(process.cwd()+'/src/assets/'+file[0]);
+               fontHeaders(req,res);
+               res.setHeader('Content-Type',file[1]);
+               res.setHeader('Cache-Control','no-cache');
+               res.end(req.method==='HEAD'?undefined:bytes);
+             } catch { next(); }
+           });
+         }}]}});
        console.log('FIXTURE_ORIGIN=http://127.0.0.1:'+server.address.port);
        process.on('SIGTERM',async()=>{await server.stop();process.exit()});`;
   const { child, stop } = lifecycle.spawn(
@@ -84,15 +140,14 @@ export async function startHost(root, production = false, lifecycle = createLife
       // Astro deliberately omits its HTTP middleware under VITEST. This child
       // is a real host process, not a component test environment.
       env: {
-        ...process.env,
-        VITEST: "",
+        ...fixtureEnvironment(),
         NODE_ENV: production ? "production" : "development",
         ASTRO_NODE_AUTOSTART: "disabled",
         ASTRO_TELEMETRY_DISABLED: "1",
         ASTRO_DISABLE_UPDATE_CHECK: "true",
         TMPDIR: root,
         HOST: "127.0.0.1",
-        PORT: "0",
+        PORT: String(port),
       },
       stdio: ["ignore", "pipe", "pipe"],
     },
@@ -141,8 +196,7 @@ export async function buildHost(root, lifecycle = createLifecycle()) {
     {
       cwd: root,
       env: {
-        ...process.env,
-        VITEST: "",
+        ...fixtureEnvironment(),
         NODE_ENV: "production",
         ASTRO_TELEMETRY_DISABLED: "1",
         ASTRO_DISABLE_UPDATE_CHECK: "true",
@@ -169,12 +223,16 @@ export async function buildHost(root, lifecycle = createLifecycle()) {
 }
 
 export function client(origin, cookie = "", timeoutMs = 10_000) {
-  return async (path, body, method = body === undefined ? "GET" : "POST") => {
+  const send = async (path, body, method = body === undefined ? "GET" : "POST", overrides = {}) => {
     const headers = new Headers();
     if (cookie) headers.set("Cookie", cookie);
     if (body !== undefined) {
       headers.set("Content-Type", "application/json");
       headers.set("X-EmDash-Request", "1");
+    }
+    for (const [name, value] of Object.entries(overrides)) {
+      if (value === null) headers.delete(name);
+      else headers.set(name, value);
     }
     const request = new Request(new URL(path, origin), {
       method,
@@ -195,6 +253,9 @@ export function client(origin, cookie = "", timeoutMs = 10_000) {
       headers: response.headers,
     });
   };
+  // Carry only this synthetic fixture's in-memory session across its dev/build
+  // restart. No developer database or persisted session is read.
+  return Object.assign(send, { at: (nextOrigin) => client(nextOrigin, cookie, timeoutMs) });
 }
 
 export async function api(request, path, body, method) {
@@ -205,7 +266,7 @@ export async function api(request, path, body, method) {
   return result.data;
 }
 
-export async function setup(origin) {
+export async function setup(origin, timeoutMs = 10_000) {
   const response = await client(origin)("/_emdash/api/setup/dev-bypass?content=0", {});
   if (!response.ok)
     throw new Error(`Native setup failed: ${response.status} ${await response.text()}`);
@@ -214,7 +275,7 @@ export async function setup(origin) {
     .map((value) => value.split(";")[0])
     .join("; ");
   if (!cookie) throw new Error("Native setup did not establish an admin session");
-  const admin = client(origin, cookie);
+  const admin = client(origin, cookie, timeoutMs);
   await api(admin, "schema/collections", {
     slug: "kerna_pages",
     label: "Kerna Pages",
@@ -235,7 +296,7 @@ export async function setup(origin) {
     .map((value) => value.split(";")[0])
     .join("; ");
   if (!editorCookie || editorCookie === cookie) throw new Error("Editor session must be separate");
-  return { admin, editor: client(origin, `${editorCookie}; emdash-edit-mode=true`) };
+  return { admin, editor: client(origin, `${editorCookie}; emdash-edit-mode=true`, timeoutMs) };
 }
 
 export function page(title, id = "hero") {

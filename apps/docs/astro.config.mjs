@@ -14,6 +14,11 @@ export default defineConfig({
           items: [
             { label: "Create your first Proposal", slug: "guides/first-proposal" },
             { label: "Save Proposal decisions safely", slug: "guides/persist-proposal-decisions" },
+            { label: "Trusted Astro rendering", slug: "guides/trusted-astro-rendering" },
+            {
+              label: "Register Astro Components and Slots",
+              slug: "guides/registered-astro-components",
+            },
           ],
         },
         {

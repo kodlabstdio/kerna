@@ -1,22 +1,28 @@
 import { ContentSaveRejectedError, definePlugin, type PluginDescriptor } from "emdash";
+export { renderPreview } from "./preview/render.ts";
 import { components } from "@kodlab/kerna-components/registry";
 import {
   createDesignSystem,
   getEnabledComponents,
   readPage,
   type ComponentRegistry,
+  type BlockPresets,
   type DesignSystem,
 } from "@kodlab/kerna-core";
 
 export interface KernaOptions {
   components?: ComponentRegistry;
   designSystem?: DesignSystem;
+  presets?: BlockPresets;
 }
 
 const id = "kerna";
 const version = "0.0.0";
 const adminEntry = "@kodlab/kerna/admin";
-const pages = [{ path: "/setup", label: "Kerna", icon: "squares-four" }];
+const pages = [
+  { path: "/setup", label: "Kerna", icon: "squares-four" },
+  { path: "/editor", label: "Edit Pages", icon: "article" },
+];
 
 export function kerna(options: KernaOptions = {}): PluginDescriptor<KernaOptions> {
   return {
@@ -58,6 +64,18 @@ export function createPlugin(options: KernaOptions = {}) {
           // Migrations are persisted only when this write submitted Page content.
           if (Object.hasOwn(event.content, "page")) return { ...event.content, page: result.page };
         },
+      },
+    },
+    routes: {
+      config: {
+        methods: ["GET"],
+        permission: "schema:read",
+        request: { body: "none" },
+        handler: async () => ({
+          components: enabled,
+          designSystem: system,
+          presets: options.presets ?? {},
+        }),
       },
     },
   });

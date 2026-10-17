@@ -22,7 +22,36 @@ export const designSystem = createDesignSystem(components, {
 });
 ```
 
-In `astro.config.mjs`, add `kerna({ designSystem })` to the existing `emdash({ plugins: [...] })` array, importing `kerna` from `@kodlab/kerna` and `designSystem` from `./src/kerna.ts`. Keep the host's existing EmDash database, storage and React integration configuration.
+Define complete, valid Block presets beside the shared Design System. Presets are server-owned configuration; the browser cannot supply or override them:
+
+```ts
+export const presets = {
+  Hero: {
+    type: "Hero",
+    props: {
+      id: "hero",
+      variant: "centered",
+      title: "A clear welcome",
+      description: "Introduce what this Page offers.",
+      foreground: { token: "ink" },
+      background: { token: "paper" },
+      typography: { token: "body" },
+      spacing: { token: "section" },
+    },
+  },
+};
+```
+
+Pass both values to the native plugin in `astro.config.mjs`:
+
+```js
+import { kerna } from "@kodlab/kerna";
+import { designSystem, presets } from "./src/kerna.ts";
+
+emdash({ plugins: [kerna({ designSystem, presets })] /* existing host configuration */ });
+```
+
+Keep the host's existing EmDash database, storage and React integration configuration. Kerna exposes the private editor catalog through an Editor-only plugin route; EmDash enforces the session permission and request protection on that route.
 
 Start the site, sign in as an admin, open **Kerna** and select **Set up Kerna**. This creates the `kerna_pages` collection, including drafts, revisions and preview. It is safe to retry. Incompatible existing schema is reported for the admin to repair.
 
@@ -53,6 +82,12 @@ if (Astro.cache?.enabled) Astro.cache.set(cacheHint);
 In EmDash 1.2, an expired, tampered or mismatched preview token falls back to published content with `isPreview: false`, or returns no entry when the Page is unpublished. A valid matching token returns the draft with `isPreview: true`. Test preview links without an editor session: authenticated edit mode can independently authorize draft access. A newer draft does not replace the public revision until it is published.
 
 The renderer revalidates the stored Page and shows a safe fallback for invalid documents. Hero outputs HTML and CSS, with no client runtime. A host layout can add its own scripts; disable optional host interactions when a route must ship no executable JavaScript. The example uses the playground's `Base` layout API, `search={false}`; adapt that prop to your host layout's supported way of disabling optional scripts. EmDash's authenticated editing toolbar is separate from anonymous public output.
+
+Installed Astro Components execute as trusted host code. See the [rendering guide](../../apps/docs/src/content/docs/guides/trusted-astro-rendering.md) for the private-preview integration proof and its resource limits.
+
+The native `/editor` page lists existing Kerna Pages and requires the EmDash Editor role. Editors can update existing drafts with Puck history, validation, preview, optimistic saves and an unsaved-changes guard. Setup remains administrator-only.
+
+For the complete setup, editor, presets, shared host Document and registered renderer walkthrough, see [Register Astro Components and Slots](../../apps/docs/src/content/docs/guides/registered-astro-components.md) and the [trusted preview guide](../../apps/docs/src/content/docs/guides/trusted-astro-rendering.md).
 
 In the playground, `search={false}` removes the search control as well as its script. Ordinary navigation links remain HTML links. Other themes must check their own optional interactions and the complete anonymous response, including EmDash contributions, before claiming a route has no executable scripts.
 
