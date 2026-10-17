@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "ready": "vp run repo:check && vp run -r sync && vp check && vp run design:lint && vp run -r typecheck && vp run -r test && vp run -r build",
+    "ready": "vp run repo:check && vp run -r sync && vp check && vp run design:lint && vp run -r typecheck && vp run test:ci && vp run -r build",
+    "test:ci": "vp run -r --concurrency-limit 1 test --bail 1 --no-file-parallelism --reporter verbose",
     "dev": "vp run playground#dev",
     "design:lint": "node scripts/lint-design.mjs DESIGN.md apps/site/DESIGN.md",
     "prepare": "vp config"

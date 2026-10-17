@@ -173,7 +173,7 @@ Kerna's editor lives inside other people's EmDash admins, so it should feel like
 
 ## Overview
 
-Calm, dense and precise: the Reviewer is checking an Agent's work, so nothing competes with the content and the diff. The editor is three columns inside the admin frame: outline, preview and fields. A focus mode collapses the outline and fields so the preview fills the frame.
+Calm, dense and precise: the Reviewer is checking an Agent's work, so nothing competes with the content and the diff. The editor fills the browser-content viewport within the authenticated admin session. A compact toolbar provides Return, Page identity and Save above Components/Outline, preview and Fields. Setup and settings retain the normal host frame. This does not use the browser Fullscreen API.
 
 Every value here mirrors a Kumo token from EmDash's admin. Build with Kumo components and its `kumo-*` classes or CSS variables, never with the literal values below: Kumo resolves light and dark mode with `light-dark()`, and EmDash's "classic" theme re-maps the neutrals. Literal values would break both. The values here are the light-mode values, for reference and contrast checks.
 
@@ -207,10 +207,10 @@ The admin's own stack: `--font-sans` (EmDash sets it to `--font-emdash`, then `s
 
 ## Layout
 
-- **Three columns:** outline 260px, preview flexible, fields 320px. Below 1024px the outline becomes a drawer and the fields a bottom sheet.
+- **Three columns:** Components/Outline tabs share a 260px left panel, preview is flexible, Fields is 320px. Below 1024px the requested left tab opens in one modal drawer; Fields occupies a bounded nonmodal region below the preview, with independent scrolling and reachable toolbar and preview.
 - **Focus mode** hides both side panels; a single shortcut toggles it, and the preview stays where it was.
 - **Spacing** follows Kumo's 4px Tailwind base; Kerna uses only the `xs`–`2xl` steps above.
-- **Proposal review** replaces the fields column with the list of Operations; the preview shows the Proposal applied.
+- **Proposal review** replaces Fields with Operations; below 1024px Operations is a bounded nonmodal region below the preview. The preview shows the Proposal applied.
 
 ## Elevation & Depth
 
@@ -240,4 +240,4 @@ Kumo's radii: `rounded-lg` (8px) for buttons, inputs and cards; `rounded-md` (6p
 - **Don't** use the heat ramp, gradients or the brand's ultramarine in the admin; red, orange and yellow already mean removed and warning here.
 - **Don't** use green or red for Accept and Reject buttons; those colours belong to the diff.
 - **Don't** invent colours, fonts, radii or shadows outside this file; if something is missing, add it here first.
-- **Don't** open the editor outside the admin frame (PRD: stay in the admin frame).
+- **Do** preserve the host session, theme and permissions in full viewport, protect dirty exits, and restore host focus and scrolling on Return or unmount.

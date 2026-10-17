@@ -1,0 +1,30 @@
+---
+import { Page } from "@kodlab/kerna-components";
+import { frameBridge } from "@kodlab/kerna/preview";
+import Base from "../layouts/Base.astro";
+import { designSystem } from "../kerna";
+const { page, title = "Page", preview, content } = Astro.props;
+const activePreview = !!preview;
+const policy = activePreview
+  ? `default-src 'none'; script-src 'nonce-${preview.nonce}'; style-src 'unsafe-inline' ${Astro.url.origin}; img-src data: ${Astro.url.origin}; font-src data: ${Astro.url.origin}; connect-src 'none'; form-action 'none'; base-uri ${Astro.url.origin}`
+  : undefined;
+---
+
+<Base title={title} search={false} content={content}>
+  {activePreview && <base slot="head" href={new URL("/", Astro.url).href} />}
+  {activePreview && (
+    <meta slot="head" http-equiv="Content-Security-Policy" content={policy} />
+  )}
+  {activePreview && <meta slot="head" name="referrer" content="no-referrer" />}
+  <Page page={page} designSystem={designSystem} preview={activePreview} />
+  <slot />
+  {activePreview && (
+    <script
+      is:inline
+      slot="scripts"
+      data-kerna-bridge={preview.binding.token}
+      nonce={preview.nonce}
+      set:html={`(${frameBridge.toString()})(${JSON.stringify(preview.binding)});`}
+    />
+  )}
+</Base>

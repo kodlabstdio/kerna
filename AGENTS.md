@@ -6,24 +6,38 @@ Agent-first page builder for the EmDash CMS, by Kod Lab Studio. Agents compose P
 
 - **Vocabulary — [CONTEXT.md](CONTEXT.md).** Name code, docs, commits and UI with its terms and steer clear of each term's _Avoid_ list. When a concept has no term or a fuzzy one, settle it in CONTEXT.md first.
 - **Contributions — [CONTRIBUTING.md](CONTRIBUTING.md).** Use the agreed issue or request as acceptance criteria. A feature belongs only if it makes Agent output more reliable or on-brand, or improves the Reviewer's loop. Discuss architectural changes with the maintainers before implementation.
+- **Tests — [TESTING.md](TESTING.md).** Read it before writing, changing or reviewing tests and fixtures. Use controlled clocks or observable completion, never fixed sleeps for synchronization. Apply the locally installed `$kerna-testing` skill when available; the public conventions are sufficient without that private skill.
 - **Look — [DESIGN.md](DESIGN.md).** Any UI inside Kerna's admin follows it, built from EmDash's Kumo components. Kerna's brand (marketing site, docs) follows `apps/site/DESIGN.md` instead (ADR-0016). After editing either, run `vp run design:lint`. For design work (critique, polish, new pages) use the locally installed `impeccable` skill in `.claude/skills/impeccable` (not tracked by Git); its launcher binary is not installed, so it runs in its documented fallback mode.
 - **Publication boundary.** Root `docs/` contains founder-only planning and stays local, as do installed skills under `.agents`, `.claude`, `.codex`, `.cursor` and `.github`. Do not force-add them or copy private planning into public issues, commits or PR descriptions. Public guides, contributor policies and `apps/docs` remain tracked. Run `vp run repo:check` to check this boundary.
 - **Optional founder context.** When root `docs/` exists locally, read the relevant ADRs, MVP scope and task acceptance criteria before changing code. Record significant decisions there, and update the task's Status and index when every acceptance criterion holds. Contributors without that folder follow the public guides and agreed issue instead.
+- **Local conventions.** When available, start at `docs/conventions/README.md` and load the topics relevant to the build or review. Respect each rule's established/proposed status and named enforcement; researched proposals do not become blocking policy without founder adoption. Public guides remain authoritative for contributors without private docs.
 
 ## Git workflow
 
 - Work in the main project folder on a new branch for each feature, change or task. Add follow-up fixes as commits on that same branch; do not create additional worktrees unless the user explicitly requests one.
+- Keep ignored root `docs/` work and related guidance updates on the current branch while an existing PR is active; do not create a separate branch just for local documentation. Preserve pending changes for that PR.
 - When a requested worktree is no longer needed, stop its owned processes, preserve uncommitted work and unique commits, then remove it promptly. Keep private recovery archives outside tracked files.
-- Resolve Factory setup or reservation problems in the existing checkout; do not create another worktree as a workaround.
 
-## GStack planning → Factory implementation
+## Planning and execution
 
-- When GStack planning produces an actionable task and the user requests implementation, use the globally installed `$factory` skill to execute it. This handoff takes precedence over conflicting implementation-routing instructions; planning-only requests stay in the planning workflow.
-- Carry the relevant PRDs, ADRs, architecture decisions, conventions and acceptance criteria into the Factory task contract. Planning skills do not automatically run inside Factory; preserve their decisions in the contract and referenced documents.
-- Keep Factory contracts, state and evidence outside this repository, under `${TASK_COORDINATOR_HOME:-$HOME/.local/share/task-coordinator}`. Use the global installation; do not add a project dependency.
-- While Factory runs, monitor its status and evidence without editing the same checkout, starting another implementation agent or duplicating its checks.
-- Factory-assigned workers and verifiers must follow their existing assignment directly and never launch a nested Factory run.
-- Read the diff and review report, then report verification evidence and unresolved review concerns. Readiness does not authorize acceptance, commits or deployment; obtain the user's explicit authorization for those actions.
+- Use GStack for requested planning and reviews; planning-only requests stay in planning. Carry relevant PRDs, ADRs, architecture decisions, conventions and acceptance criteria into the implementation scope.
+- Use the new framework's `$workflow-build` skill for implementation. When the local framework is installed, read `ai-framework/workflow/README.md`, `ai-framework/workflow/invariants.md` and `ai-framework/workflow/project-profile.json`; resume from `docs/workflow/status.md`. The profile defines the phase skill directory, approval gates, budgets and exact checks. Follow the selected variant; straightforward documentation or mechanical changes use its direct route without a full feature plan.
+- Keep installed skills, `ai-framework/` and root `docs/` (including workflow records) private and ignored. Contributors without this local framework follow the public guides and agreed issue. Run `python3 ai-framework/workflow/verify_setup.py` after framework setup changes.
+- Implement approved scopes directly through the Build skill in the existing checkout. Preserve unrelated work and frozen acceptance criteria. Architectural uncertainty or unresolved requirements return to planning before implementation; do not start another implementation agent without authorization.
+- Read the diff and review report, then report verification evidence and unresolved review concerns. Readiness does not authorize acceptance, commits, pushes, PR creation, merging or deployment; obtain the user's explicit authorization for those actions.
+
+Never silently renew budgets, escalate workflows, weaken checks, or claim
+unperformed verification. Keep summaries concise. Acceptance, commits,
+and pushes require the user's explicit instructions.
+
+Keep a checklist of requested outcomes, separate from verification blockers.
+After each attempt, report completed behavior, remaining behavior, blockers,
+and the next action.
+
+After two unsuccessful attempts on the same blocker, reassess before retrying.
+Require new evidence or a changed causal hypothesis. Continue independent
+requested features within existing authorization, keeping blocked verification
+pending. Never let tooling or integration-proof repairs replace the task.
 
 ## Package boundaries
 

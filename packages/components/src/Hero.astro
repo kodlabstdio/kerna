@@ -4,6 +4,7 @@ import { tokenVariable } from "./tokens";
 
 interface Props {
   block: Block;
+  preview?: boolean;
 }
 const { props } = Astro.props.block;
 const token = (field: string) =>
@@ -14,7 +15,8 @@ const token = (field: string) =>
 
 <section
   id={props.id}
-  data-kerna-component="Hero"
+  data-kerna-id={Astro.props.preview ? props.id : undefined}
+  data-kerna-component={Astro.props.preview ? "Hero" : undefined}
   data-variant={props.variant}
   style={{
     color: token("foreground"),

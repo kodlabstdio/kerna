@@ -8,5 +8,6 @@ List commands and browser flows you tested, plus any remaining limitations. Incl
 
 - [ ] `vp run ready` passes.
 - [ ] Relevant behavior and failure states are verified.
+- [ ] Changed tests follow `TESTING.md`, including deterministic waits and fixture cleanup.
 - [ ] Public instructions are updated where needed.
 - [ ] No credentials, root `docs/` plans or local Agent skills are included.

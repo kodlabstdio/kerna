@@ -16,6 +16,8 @@ import {
   startHost,
 } from "./native-fixture.mjs";
 
+// Integration boundary: native signing, published snapshots and storage failure
+// isolation must hold through EmDash's real routing and content repository.
 test("native publication and preview keep drafts out of anonymous responses", async () => {
   const lifecycle = createLifecycle();
   onTestFinished(() => lifecycle.stop());
@@ -197,11 +199,10 @@ function expectMainContent(html: string, slug: string, expected: string) {
   const main = html.match(/<main\b[^>]*>([\s\S]*?)<\/main>/i)?.[1];
   expect(main).toBeDefined();
   if (slug === "static") {
-    const hero = main!.match(
-      /<section\b(?=[^>]*\bid="hero")(?=[^>]*\bdata-kerna-component="Hero")[^>]*>([\s\S]*?)<\/section>/i,
-    )?.[1];
+    const hero = main!.match(/<section\b(?=[^>]*\bid="hero")[^>]*>([\s\S]*?)<\/section>/i)?.[1];
     expect(hero).toBeDefined();
     expect(hero).toMatch(/<h1\b[^>]*>Static Hero<\/h1>/);
+    expect(main).not.toContain("data-kerna-component");
   } else {
     expect(main).toContain(`<p>${expected}</p>`);
     expect(main).not.toContain("data-kerna-component");
@@ -311,6 +312,9 @@ test("production assertion rejects a title without the Hero inside main", () => 
   ).toThrow();
 });
 
+// Real-time contract: real HTTP requests must abort while headers or body stall.
+// Each case exercises the client's 500ms deadline; a fake clock cannot prove
+// native HTTP cancellation. The test timeout also bounds setup and teardown.
 test.each(["headers", "body"])("HTTP deadline bounds stalled %s", async (phase) => {
   let received = false;
   const server = createServer((_request, response) => {

@@ -33,5 +33,5 @@ jobs:
       - run: vp run design:lint
       - run: vp run -r typecheck
       # core's test script enforces the 80% coverage threshold.
-      - run: vp run -r test
+      - run: vp run test:ci
       - run: vp run -r build
