@@ -51,6 +51,15 @@ Never silently renew budgets, escalate workflows, weaken checks, or claim
 unperformed verification. Keep summaries concise. Acceptance, commits,
 and pushes require the user's explicit instructions
 
+Keep a checklist of requested outcomes, separate from verification blockers.
+After each attempt, report completed behavior, remaining behavior, blockers,
+and the next action.
+
+After two unsuccessful attempts on the same blocker, reassess before retrying.
+Require new evidence or a changed causal hypothesis. Continue independent
+requested features within existing authorization, keeping blocked verification
+pending. Never let tooling or integration-proof repairs replace the task.
+
 ## Package boundaries
 
 - `packages/core` is the deep module: every domain rule (Page format, Slots, validation, Operations, Proposals, migrations, Design System) lives here as pure TypeScript with zero imports from EmDash, Astro or React. Work test-first here (red, then green), and keep coverage at or above 80%; CI enforces it.
