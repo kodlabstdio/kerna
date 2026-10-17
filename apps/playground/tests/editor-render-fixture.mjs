@@ -77,6 +77,9 @@ export const renderPage = ${JSON.stringify(proofRenderPage)};
 export const presets = ${JSON.stringify(proofPresets)};
 `,
     "src/proof-state.ts": `export const state = { active: 0, completed: 0, maximum: 0, previews: 0 };`,
+    // Real-time contract: deliberate work exceeds the unchanged 10s render
+    // deadline (10.25s blocking / 12s async). It exercises the native contract;
+    // callers synchronize on HTTP responses and observed state, not these delays.
     "src/components/ProofWork.astro": `---
 import { state } from "../proof-state";
 const { mode } = Astro.props;

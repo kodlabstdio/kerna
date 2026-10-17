@@ -163,6 +163,10 @@ test("editor prerequisite: native drafts reject stale and simultaneous writers",
   expect(await anonymous.text()).not.toContain(`Writer ${winner}`);
 }, 120_000);
 
+// Real-time contract: each native Astro host must exercise the actual 10s
+// deadline, retained render slots and synchronous blocking. A parent fake clock
+// cannot control the host process. Per host: 10.25s blocking + 12s async work;
+// the 180s test deadline also bounds startup, build and teardown on CI.
 test("trusted host render budget retains actual work and documents synchronous completion", async () => {
   const lifecycle = createLifecycle();
   onTestFinished(() => lifecycle.stop());

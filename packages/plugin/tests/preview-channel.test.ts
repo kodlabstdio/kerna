@@ -78,15 +78,31 @@ test("a transferred channel selects only until its document is disposed", async 
       y: 300,
     });
     port.postMessage({ ...binding, version: 1, type: "scroll", x: 0, y: 300 });
-    await expect.poll(() => scrolled).toEqual([{ x: 0, y: 300 }]);
+    await expect
+      .poll(() => scrolled, {
+        timeout: 1_000,
+        message: "Current document reports its scroll position",
+      })
+      .toEqual([{ x: 0, y: 300 }]);
     port.postMessage({ ...message, generation: 2 });
     port.postMessage({ ...message, type: "save" });
     port.postMessage(message);
-    await expect.poll(() => selected).toEqual(["nested"]);
+    await expect
+      .poll(() => selected, {
+        timeout: 1_000,
+        message: "Current document selects its nested Block",
+      })
+      .toEqual(["nested"]);
+    const closed = new Promise<void>((resolve) => {
+      port.addEventListener("close", () => resolve(), { once: true });
+    });
+    // Work queued before disposal must not reach the callbacks either.
+    port.postMessage(message);
+    port.postMessage({ ...binding, version: 1, type: "scroll", x: 0, y: 400 });
     connected.dispose();
     port.postMessage(message);
     port.postMessage({ ...binding, version: 1, type: "scroll", x: 0, y: 400 });
-    await new Promise((resolve) => setTimeout(resolve, 20));
+    await closed;
     expect(selected).toEqual(["nested"]);
     expect(scrolled).toEqual([{ x: 0, y: 300 }]);
   } finally {

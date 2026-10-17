@@ -310,6 +310,9 @@ test("production assertion rejects a title without the Hero inside main", () => 
   ).toThrow();
 });
 
+// Real-time contract: real HTTP requests must abort while headers or body stall.
+// Each case exercises the client's 500ms deadline; a fake clock cannot prove
+// native HTTP cancellation. The test timeout also bounds setup and teardown.
 test.each(["headers", "body"])("HTTP deadline bounds stalled %s", async (phase) => {
   let received = false;
   const server = createServer((_request, response) => {

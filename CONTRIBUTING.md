@@ -39,6 +39,8 @@ Run `vp run ready` before opening a PR. It checks the publication boundary, gene
 
 CI and `ready` use `vp run test:ci`: tests stop after the first failure, finish fixture cleanup and report individual test timings. Test tasks and files run one at a time so native-host fixtures do not compete for resources or keep other files running after a failure. For a full diagnostic run that collects all failures, use `vp run -r test`.
 
+Follow the [testing conventions](TESTING.md) when writing or changing tests: control timer behavior with fake clocks, await observable completion and keep external waits bounded. Fixed sleeps are not synchronization. The guide also covers fixture isolation, cleanup and the narrow exception for real-time integration contracts.
+
 Keep changes focused. Add a regression test for a bug when it exercises meaningful behavior. Update affected public instructions. Do not commit credentials, local databases, the root `docs/` planning folder or local Agent skills.
 
 Open PRs against `main` with a short explanation of the problem, resulting behavior and validation. Use a conventional title with a scope, for example `fix(core): reject duplicate Block IDs`; the allowed scopes are in [commitlint.config.js](commitlint.config.js). CI validates the PR title because squash merges use it as the commit title.

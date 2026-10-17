@@ -1,11 +1,20 @@
 // @vitest-environment happy-dom
 import { act, createElement, Fragment } from "react";
 import { createRoot } from "react-dom/client";
-import { expect, test, vi } from "vite-plus/test";
+import { afterEach, beforeEach, expect, test, vi } from "vite-plus/test";
 import { EditorAdapter, pageSnapshot } from "../../../packages/plugin/src/admin/puck-adapter.tsx";
 import { EditorProof } from "../../../packages/plugin/src/admin/editor-proof.tsx";
 import { components as siteComponents } from "../../../packages/components/src/registry.ts";
 import { proofComponents, proofPage, proofPresets } from "./editor-proof-data.mjs";
+
+// Pin the real Puck 0.23 history boundary without spending wall-clock time.
+const historyDebounceMs = 250;
+beforeEach(() => vi.useFakeTimers());
+afterEach(() => {
+  vi.clearAllTimers();
+  vi.useRealTimers();
+});
+const settleHistory = () => act(async () => vi.advanceTimersByTimeAsync(historyDebounceMs));
 
 test("pinned Puck accepts only validated candidates, and owns undo and redo", async () => {
   Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
@@ -31,7 +40,7 @@ test("pinned Puck accepts only validated candidates, and owns undo and redo", as
     expect(pageSnapshot(editor.page)).toBe(pageSnapshot(proofPage));
     expect(editor.canUndo).toBe(false);
     await act(async () => editor.commit(structuredClone(proofPage)));
-    await act(async () => new Promise((resolve) => setTimeout(resolve, 300)));
+    await settleHistory();
     expect(editor.canUndo).toBe(false);
     // Native JSON round trips can reorder keys without changing the Page.
     const baseline = JSON.stringify(proofPage);
@@ -52,7 +61,7 @@ test("pinned Puck accepts only validated candidates, and owns undo and redo", as
     await act(async () => editor.select("parent"));
     await act(async () => editor.select("child"));
     expect(element.querySelector('input[id="child:title"]').value).toBe("Chrome verified edit");
-    await act(async () => new Promise((resolve) => setTimeout(resolve, 300)));
+    await settleHistory();
     await act(async () => editor.undo());
     expect(editor.page).toEqual(JSON.parse(baseline));
     expect(pageSnapshot(editor.page)).toBe(pageSnapshot(proofPage));
@@ -97,9 +106,10 @@ test("pinned Puck accepts only validated candidates, and owns undo and redo", as
       expect(editor.commit(valid)).toBe(true);
     });
     // Puck 0.23 groups accepted commits with a 250ms history debounce.
-    await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 300));
-    });
+    expect(editor.canUndo).toBe(false);
+    await act(async () => vi.advanceTimersByTimeAsync(historyDebounceMs - 1));
+    expect(editor.canUndo).toBe(false);
+    await act(async () => vi.advanceTimersByTimeAsync(1));
     expect(editor.page).toEqual(valid);
     expect(editor.canUndo).toBe(true);
     await act(async () => editor.undo());
@@ -151,7 +161,6 @@ test("Puck round trip preserves root title and canonical key-order identity", as
 });
 
 // Structural tests mount the real pinned Puck provider and its actual Fields.
-const settleHistory = () => act(async () => new Promise((resolve) => setTimeout(resolve, 300)));
 async function withEditor(options, run) {
   Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
   const element = document.createElement("div");
@@ -233,7 +242,7 @@ async function shortcut(target, key, { meta = false, shift = false, alt = false 
     if (shift) dispatch("keyup", "Shift", "ShiftLeft");
     dispatch("keyup", ...modifier);
   });
-  await act(async () => new Promise((resolve) => requestAnimationFrame(resolve)));
+  await act(async () => vi.advanceTimersToNextFrame());
   return handled;
 }
 
@@ -675,7 +684,6 @@ async function withProof(compact, run, options = {}) {
   try {
     await render();
     await click("Open editor");
-    await act(async () => new Promise((resolve) => setTimeout(resolve, 200)));
     await run({ element, click, button, fetchMock, render, navigate: () => guard(), unregister });
   } finally {
     await act(async () => root.unmount());
@@ -711,7 +719,6 @@ test("empty proof Page has associated keyboard tabs and preset insertion opens F
     await click("Add Proof Columns");
     expect(document.activeElement.getAttribute("aria-label")).toBe("Fields");
     expect(element.querySelector('[aria-label="left Slot"]')).toBeTruthy();
-    await act(async () => new Promise((resolve) => setTimeout(resolve, 350)));
     expect(element.querySelector('iframe[title="Page preview"]')).toBe(iframe);
     const request = fetchMock.mock.calls
       .filter(([url]) => String(url).endsWith("kerna-preview"))
@@ -930,7 +937,6 @@ test("preview failure retains accepted edits and invalid input; Retry renders th
       failPreview = true;
       await typeInput(view.element, "child:title", "Kept after preview failure");
       await typeInput(view.element, "child:count", "not a number");
-      await act(async () => new Promise((resolve) => setTimeout(resolve, 250)));
       expect(view.element.textContent).toContain("Preview could not load. Your changes are kept.");
       expect(view.element.querySelector('input[id="child:title"]').value).toBe(
         "Kept after preview failure",
@@ -945,7 +951,6 @@ test("preview failure retains accepted edits and invalid input; Retry renders th
       expect(iframe.inert).toBe(true);
       failPreview = false;
       await view.click("Retry preview");
-      await act(async () => new Promise((resolve) => setTimeout(resolve, 250)));
       expect(candidates.at(-1).content[0].props.left[0].props).toMatchObject({
         title: "Kept after preview failure",
         count: 1,
@@ -1060,7 +1065,6 @@ test("late Page A load cannot replace Page B or revive its preview session", asy
       expect(view.element.textContent).toContain("Loading Page");
       await view.render("page-b");
       expect(signalA.aborted).toBe(true);
-      await act(async () => new Promise((resolve) => setTimeout(resolve, 200)));
       expect(view.element.querySelector(".kerna-proof-toolbar h1").textContent).toBe("Page B");
       const iframe = view.element.querySelector("iframe");
       await act(async () =>
@@ -1116,7 +1120,6 @@ test("save keeps edits made while the accepted snapshot is in flight dirty", asy
       await typeInput(view.element, "child:title", "Edit during save");
       await act(async () => {
         resolveSave(Response.json({ data: { _rev: "2" } }));
-        await new Promise((resolve) => setTimeout(resolve, 0));
       });
       expect(view.element.querySelector('input[id="child:title"]').value).toBe("Edit during save");
       expect(view.element.textContent).toContain("Unsaved changes");
