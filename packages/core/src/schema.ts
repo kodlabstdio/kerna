@@ -181,3 +181,36 @@ export type AcceptProposalResult =
       expectedProposalVersion: number;
     }
   | ProposalFailure;
+
+/** Supply the current enabled Component registry and Design Tokens. */
+export interface PageMutationInput extends ProposalRules {
+  page: unknown;
+  operation: unknown;
+}
+export type PageMutationResult = { ok: true; page: Page } | ProposalFailure;
+export type BlockPresetError = Omit<ProposalError, "code"> & {
+  code:
+    | ProposalErrorCode
+    | "missing_preset"
+    | "invalid_preset"
+    | "disabled_component"
+    | "invalid_id";
+};
+export type BlockPresetFailure = { ok: false; errors: BlockPresetError[] };
+export type BlockPresetResult = { ok: true; block: Block } | BlockPresetFailure;
+export type BlockPresets = Record<string, unknown>;
+export interface InsertBlockPresetInput extends ProposalRules {
+  page: unknown;
+  presets: BlockPresets;
+  component: string;
+  destination: BlockDestination;
+  generateId: () => string;
+}
+export type InsertBlockPresetResult = { ok: true; page: Page; block: Block } | BlockPresetFailure;
+export interface RootBlockDestinationInput extends ProposalRules {
+  page: unknown;
+  selectedBlockId: string | null;
+}
+export type RootBlockDestinationResult =
+  | { ok: true; destination: BlockDestination }
+  | ProposalFailure;
