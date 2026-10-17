@@ -6,16 +6,27 @@ import {
 } from "@kodlab/kerna-core";
 import { components } from "./registry";
 import { tokenDeclarations } from "./tokens";
+import BlockView from "./Block.astro";
 import Hero from "./Hero.astro";
+import type { ComponentRegistry } from "@kodlab/kerna-core";
 
 interface Props {
   page: unknown;
   designSystem: DesignSystem;
+  registry?: ComponentRegistry;
+  renderers?: Record<string, typeof Hero>;
+  preview?: boolean;
 }
-const { page, designSystem } = Astro.props;
+const {
+  page,
+  designSystem,
+  registry = components,
+  renderers = {},
+  preview = false,
+} = Astro.props;
 const result = readPage(
   page,
-  getEnabledComponents(components, designSystem),
+  getEnabledComponents(registry, designSystem),
   designSystem.tokens,
 );
 const declarations = tokenDeclarations(designSystem.tokens);
@@ -23,7 +34,14 @@ const declarations = tokenDeclarations(designSystem.tokens);
 
 <style is:inline set:html={`:root{${declarations}}`} />
 {result.ok ? (
-  result.page.content.map((block) => <Hero block={block} />)
+  result.page.content.map((block) => (
+    <BlockView
+      block={block}
+      components={getEnabledComponents(registry, designSystem)}
+      renderers={renderers}
+      preview={preview}
+    />
+  ))
 ) : (
   <p>This Page is unavailable.</p>
 )}

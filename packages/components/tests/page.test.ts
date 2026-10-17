@@ -1,8 +1,9 @@
 import { expect, test } from "vite-plus/test";
 import { experimental_AstroContainer as AstroContainer } from "astro/container";
-import { createDesignSystem } from "@kodlab/kerna-core";
+import { createComponentRegistry, createDesignSystem } from "@kodlab/kerna-core";
 import { components } from "../src/registry";
 import Page from "../src/Page.astro";
+import Synthetic from "./Synthetic.astro";
 
 const designSystem = createDesignSystem(components, {});
 const hero = (id = "first", props = {}) => ({
@@ -10,15 +11,67 @@ const hero = (id = "first", props = {}) => ({
   props: { id, variant: "centered", title: "Hello", ...props },
 });
 const page = (content = [hero()]) => ({ formatVersion: 1, root: { props: {} }, content });
-const render = async (input: unknown, system = designSystem) => {
+const render = async (input: unknown, system = designSystem, preview = false) => {
   const container = await AstroContainer.create();
-  return container.renderToString(Page, { props: { page: input, designSystem: system } });
+  return container.renderToString(Page, { props: { page: input, designSystem: system, preview } });
 };
 
 test("compiles Page and Hero through Astro", async () => {
   const html = await render(page());
-  expect(html).toContain('data-kerna-component="Hero"');
+  expect(html).not.toContain("data-kerna-component");
   expect(html).toMatch(/<h1[^>]*>Hello<\/h1>/);
+});
+
+test("editor preview markers are opt-in and absent from public output", async () => {
+  const preview = await render(page(), designSystem, true);
+  expect(preview).toContain('data-kerna-component="Hero"');
+  expect(preview).toContain('data-kerna-id="first"');
+  const published = await render(page());
+  expect(published).not.toContain("data-kerna-component");
+  expect(published).not.toContain("data-kerna-id");
+});
+
+test("host-registered Astro renderer receives nested Slot content", async () => {
+  const registry = createComponentRegistry([
+    ...Object.entries(components).map(([name, definition]) => ({ name, ...definition })),
+    {
+      name: "Frame",
+      label: "Frame",
+      variants: ["plain"],
+      fields: {},
+      slots: { content: { accepts: ["Hero"], min: 0, max: 4 } },
+    },
+  ]);
+  const system = createDesignSystem(registry, {});
+  const nested: unknown = {
+    formatVersion: 1,
+    root: { props: {} },
+    content: [
+      {
+        type: "Frame",
+        props: {
+          id: "frame",
+          variant: "plain",
+          content: [hero("nested", { title: "Nested heading" })],
+        },
+      },
+    ],
+  };
+  const container = await AstroContainer.create();
+  const html = await container.renderToString(Page, {
+    props: {
+      page: nested,
+      designSystem: system,
+      registry,
+      renderers: { Frame: Synthetic },
+      preview: true,
+    },
+  });
+  expect(html).toContain('data-synthetic="Frame"');
+  expect(html).toContain('data-kerna-component="Frame"');
+  expect(html).toContain('data-kerna-component="Hero"');
+  expect(html).toMatch(/<h1[^>]*>Nested heading<\/h1>/);
+  staticHtml(html);
 });
 
 function staticHtml(html: string) {
@@ -110,7 +163,7 @@ test("emits distinct token declarations and references; omitted fields inherit",
 test.each([undefined, 0])("read migration %s does not mutate input", async (formatVersion) => {
   const input = { ...page(), formatVersion };
   const before = structuredClone(input);
-  expect(await render(input)).toContain('data-kerna-component="Hero"');
+  expect(await render(input)).toContain("<section");
   expect(input).toEqual(before);
 });
 

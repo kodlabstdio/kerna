@@ -1,0 +1,36 @@
+---
+import type { ComponentRegistry, Block as PageBlock } from "@kodlab/kerna-core";
+import Hero from "./Hero.astro";
+
+interface Props {
+  block: PageBlock;
+  components: ComponentRegistry;
+  renderers?: Record<string, typeof Hero>;
+  preview?: boolean;
+}
+
+const { block, components, renderers = {}, preview = false } = Astro.props;
+const definition = components[block.type];
+const Renderer =
+  renderers[block.type] ?? (block.type === "Hero" ? Hero : undefined);
+const slots = definition?.slots ?? {};
+---
+
+{Renderer ? (
+  <Renderer block={block} preview={preview}>
+    {Object.keys(slots).map((name) => (
+      <Fragment slot={name}>
+        {((block.props[name] as PageBlock[] | undefined) ?? []).map((child) => (
+          <Astro.self
+            block={child}
+            components={components}
+            renderers={renderers}
+            preview={preview}
+          />
+        ))}
+      </Fragment>
+    ))}
+  </Renderer>
+) : (
+  <p>This Page is unavailable.</p>
+)}
