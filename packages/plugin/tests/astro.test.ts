@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { components } from "@kodlab/kerna-components/registry";
 import { createDesignSystem } from "@kodlab/kerna-core";
-import { describe, expect, it, vi } from "vite-plus/test";
+import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 import { kernaAstro } from "../src/astro/index.ts";
 import { admitPreview } from "../src/astro/runtime.ts";
 
@@ -13,6 +13,7 @@ const designSystem = createDesignSystem(components, {});
 const page = { formatVersion: 1, root: { props: {} }, content: [] };
 const binding = { token: "a".repeat(64), session: "session-1", generation: 1 };
 const configuration = { components, designSystem };
+afterEach(() => vi.useRealTimers());
 function context(body: unknown, role: RoleLevel = Role.EDITOR, contentExists = true) {
   const request = new Request("http://localhost/_emdash/api/kerna-preview", {
     method: "POST",
@@ -30,6 +31,33 @@ function context(body: unknown, role: RoleLevel = Role.EDITOR, contentExists = t
 }
 
 describe("production Astro preview admission", () => {
+  it.each([
+    ["missing request marker", { "X-EmDash-Request": "" }, 403],
+    ["foreign origin", { Origin: "https://hostile.invalid" }, 403],
+    ["unsupported content type", { "Content-Type": "text/plain" }, 415],
+    ["declared oversized body", { "Content-Length": "1004097" }, 413],
+  ])("rejects %s before storage or rendering", async (_name, headers, status) => {
+    const next = vi.fn(async () => new Response("must not render"));
+    const denied = context({ id: "page", page, binding });
+    for (const [name, value] of Object.entries(headers)) denied.request.headers.set(name, value);
+    const response = await admitPreview(denied, next, configuration);
+    expect(response.status).toBe(status);
+    expect(denied.locals.emdash.handleContentGet).not.toHaveBeenCalled();
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["invalid binding", { id: "page", page, binding: { ...binding, session: "</script>" } }],
+    ["non-object envelope", "not an envelope"],
+    ["extra envelope property", { id: "page", page, binding, extra: true }],
+  ])("rejects %s before storage or rendering", async (_name, body) => {
+    const next = vi.fn(async () => new Response("must not render"));
+    const denied = context(body);
+    expect((await admitPreview(denied, next, configuration)).status).toBe(400);
+    expect(denied.locals.emdash.handleContentGet).not.toHaveBeenCalled();
+    expect(next).not.toHaveBeenCalled();
+  });
+
   it("rejects unauthorized users before parsing or rendering", async () => {
     const next = vi.fn(async () => new Response("rendered"));
     const response = await admitPreview(
@@ -87,6 +115,43 @@ describe("production Astro preview admission", () => {
       configuration,
     );
     expect(response.status).toBe(413);
+  });
+
+  it("keeps the real render deadline and private response policy after admission", async () => {
+    vi.useFakeTimers();
+    let release!: (response: Response) => void;
+    const work = new Promise<Response>((resolve) => (release = resolve));
+    let started!: () => void;
+    const rendering = new Promise<void>((resolve) => (started = resolve));
+    const pending = admitPreview(
+      context({ id: "page", page, binding }),
+      () => {
+        started();
+        return work;
+      },
+      configuration,
+    );
+    try {
+      await rendering;
+      await vi.advanceTimersByTimeAsync(10_000);
+      const response = await pending;
+      expect(response.status).toBe(504);
+      expect(response.headers.get("Cache-Control")).toBe("private, no-store");
+      expect(response.headers.get("X-Content-Type-Options")).toBe("nosniff");
+      expect(await response.text()).not.toContain("private late content");
+    } finally {
+      release(new Response("private late content"));
+      await vi.advanceTimersByTimeAsync(0);
+      await pending;
+    }
+    const recovered = await admitPreview(
+      context({ id: "page", page, binding }),
+      async () => new Response("current content"),
+      configuration,
+    );
+    expect(recovered.status).toBe(200);
+    expect(await recovered.text()).toBe("current content");
+    expect(vi.getTimerCount()).toBe(0);
   });
 });
 

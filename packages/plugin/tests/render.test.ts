@@ -52,6 +52,11 @@ test("timeouts retain both actual render slots until settlement, then recover", 
     renderPreview(() => first.promise, signal()),
     renderPreview(() => second.promise, signal()),
   ];
+  let ended = false;
+  const responses = Promise.all(pending).then((value) => {
+    ended = true;
+    return value;
+  });
   const queued = vi.fn(async () => "must not render");
   try {
     const busy = await renderPreview(queued, signal());
@@ -59,8 +64,11 @@ test("timeouts retain both actual render slots until settlement, then recover", 
     expect(busy.headers.get("Retry-After")).toBe("1");
     expect(busy.headers.get("Cache-Control")).toBe("no-store");
     expect(queued).not.toHaveBeenCalled();
-    await vi.advanceTimersByTimeAsync(10_000);
-    expect((await Promise.all(pending)).map((response) => response.status)).toEqual([504, 504]);
+    await vi.advanceTimersByTimeAsync(9_999);
+    expect(ended).toBe(false);
+    expect((await renderPreview(queued, signal())).status).toBe(503);
+    await vi.advanceTimersByTimeAsync(1);
+    expect((await responses).map((response) => response.status)).toEqual([504, 504]);
     expect((await renderPreview(queued, signal())).status).toBe(503);
     expect(queued).not.toHaveBeenCalled();
     first.resolve("late private content");
@@ -76,6 +84,16 @@ test("timeouts retain both actual render slots until settlement, then recover", 
     second.resolve("");
     await vi.advanceTimersByTimeAsync(0);
   }
+});
+
+test("completed synchronous work cancels its deadline before timer callbacks run", async () => {
+  vi.useFakeTimers();
+  const response = await renderPreview(async () => "Trusted render settled", signal());
+  expect(response.status).toBe(200);
+  expect(await response.text()).toBe("Trusted render settled");
+  expect(vi.getTimerCount()).toBe(0);
+  await vi.advanceTimersByTimeAsync(10_000);
+  expect(response.status).toBe(200);
 });
 
 test("request cancellation neither cancels work nor affects another request", async () => {

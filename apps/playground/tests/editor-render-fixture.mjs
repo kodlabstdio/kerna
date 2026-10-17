@@ -76,57 +76,18 @@ export const page = ${JSON.stringify(proofPage)};
 export const renderPage = ${JSON.stringify(proofRenderPage)};
 export const presets = ${JSON.stringify(proofPresets)};
 `,
-    "src/proof-state.ts": `export const state = { active: 0, completed: 0, maximum: 0, previews: 0 };`,
-    // Real-time contract: deliberate work exceeds the unchanged 10s render
-    // deadline (10.25s blocking / 12s async). It exercises the native contract;
-    // callers synchronize on HTTP responses and observed state, not these delays.
-    "src/components/ProofWork.astro": `---
+    "src/proof-state.ts": `export const state = { previews: 0 };`,
+    // Read-only evidence that native admission rejected requests before the
+    // host Document ran. Render timing is tested with controlled clocks.
+    "src/proof/state.ts": `
+import type { APIRoute } from "astro";
 import { state } from "../proof-state";
-const { mode } = Astro.props;
-state.active++;
-state.maximum = Math.max(state.maximum, state.active);
-try {
-  if (mode === "sync") {
-    const until = performance.now() + 10_250;
-    while (performance.now() < until) { /* finite trusted synchronous work */ }
-  }
-  if (mode === "async") await new Promise(resolve => setTimeout(resolve, 12_000));
-} finally {
-  state.active--;
-  state.completed++;
-}
----
-<p>{mode === "large" ? "😀".repeat(1_000_001) : "Trusted render settled"}</p>
-`,
-    "src/middleware.ts": `
-import { defineMiddleware } from "astro:middleware";
-import { renderPreview } from "@kodlab/kerna";
-import { state } from "./proof-state";
-// A body keeps Astro from rerouting an empty 404 through its error page.
-const reject = (status) => Response.json({ error: "Preview request rejected" }, { status, headers: { "Cache-Control": "private, no-store" } });
-export const onRequest = defineMiddleware(async ({ request, locals, url }, next) => {
-  if (url.pathname !== "/_emdash/api/proof-render") return next();
-  if (!locals.user || locals.user.role < 30) return reject(403);
-  if (request.method === "GET")
-    return Response.json(state, { headers: { "Cache-Control": "no-store" } });
-  if (request.method !== "POST") return reject(405);
-  if (request.headers.get("X-EmDash-Request") !== "1" ||
-      (request.headers.has("Origin") && request.headers.get("Origin") !== url.origin))
-    return reject(403);
-  const mode = url.searchParams.get("mode") ?? "fast";
-  if (!["sync", "async", "large", "fast"].includes(mode)) return reject(400);
-  locals.proofMode = mode;
-  const started = performance.now();
-  const response = await renderPreview(next, request.signal);
-  response.headers.set("X-Proof-Render-Milliseconds", String(performance.now() - started));
-  return response;
-});
-`,
-    "src/proof/render.astro": `---
-import Work from "../components/ProofWork.astro";
 export const prerender = false;
----
-<!doctype html><html lang="en"><head><title>Work proof</title></head><body><Work mode={Astro.locals.proofMode} /></body></html>
+export const GET: APIRoute = ({ locals }) => {
+  if (!locals.user || locals.user.role < 30)
+    return Response.json({ error: "Preview request rejected" }, { status: 403 });
+  return Response.json(state, { headers: { "Cache-Control": "private, no-store" } });
+};
 `,
     "src/assets/proof.svg": `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"><path fill="#123456" d="M0 0h16v16H0z"/></svg>`,
     "src/components/ProofChild.astro": `---
@@ -195,7 +156,7 @@ import Document from "../components/ProofDocument.astro";
         `integrations: [{
       name: "kerna-native-render-proof",
       hooks: { "astro:config:setup": ({ injectRoute }) => {
-        injectRoute({ pattern: "/_emdash/api/proof-render", entrypoint: "./src/proof/render.astro", prerender: false });
+        injectRoute({ pattern: "/_emdash/api/proof-state", entrypoint: "./src/proof/state.ts", prerender: false });
         injectRoute({ pattern: "/__kerna-task13-proof", entrypoint: "./src/proof/landing.astro", prerender: false });
       } },
     },`,

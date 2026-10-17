@@ -29,16 +29,11 @@ test("private native preview rejects denied requests before render admission", a
   });
   const body = { id: created.item.id, page: proofPage, binding: proofBinding };
   const path = "/_emdash/api/kerna-preview";
+  // Native smoke: real session enforcement and request-marker forwarding.
+  // The request/validation matrix runs in memory in plugin/tests/astro.test.ts.
   const denied = [
     [await client(host.origin)(path, body), 401],
     [await admin(path, body, "POST", { "X-EmDash-Request": null }), 403],
-    [await admin(path, body, "POST", { Origin: "https://hostile.invalid" }), 403],
-    [await admin(path, body, "POST", { "Content-Type": "text/plain" }), 415],
-    [await admin(path, { ...body, id: "missing" }), 404],
-    [await admin(path, { ...body, page: { ...proofPage, formatVersion: 999 } }), 422],
-    [await admin(path, { ...body, binding: { ...proofBinding, session: "</script>" } }), 400],
-    [await admin(path, "not an envelope"), 400],
-    [await admin(path, { ...body, excess: "x".repeat(1_004_097) }), 413],
   ] as const;
   for (const [response, status] of denied) {
     const text = await response.text();
@@ -56,7 +51,7 @@ test("private native preview rejects denied requests before render admission", a
     db.exec("UPDATE users SET role = 50");
     db.close();
   }
-  expect((await (await admin("/_emdash/api/proof-render")).json()).previews).toBe(0);
+  expect((await (await admin("/_emdash/api/proof-state")).json()).previews).toBe(0);
   const accepted = await editor(path, body);
   expect(accepted.status).toBe(200);
   const html = await accepted.text();
@@ -70,9 +65,7 @@ test("private native preview rejects denied requests before render admission", a
     "Sec-Fetch-Site": "cross-site",
   });
   expect(svg.status, await svg.text()).toBe(200);
-  const state = await (await admin("/_emdash/api/proof-render")).json();
-  expect(state.active).toBe(0);
-  expect(state.completed).toBe(0);
+  const state = await (await admin("/_emdash/api/proof-state")).json();
   expect(state.previews).toBe(1);
   const documents = await Promise.all(
     ["Session A", "Session B"].map(async (title) => {
@@ -163,64 +156,8 @@ test("editor prerequisite: native drafts reject stale and simultaneous writers",
   expect(await anonymous.text()).not.toContain(`Writer ${winner}`);
 }, 120_000);
 
-// Real-time contract: each native Astro host must exercise the actual 10s
-// deadline, retained render slots and synchronous blocking. A parent fake clock
-// cannot control the host process. Per host: 10.25s blocking + 12s async work;
-// the 180s test deadline also bounds startup, build and teardown on CI.
-test("trusted host render budget retains actual work and documents synchronous completion", async () => {
-  const lifecycle = createLifecycle();
-  onTestFinished(() => lifecycle.stop());
-  const root = await createRenderFixture();
-  let host = await startHost(root, false, lifecycle);
-  const { admin } = await setup(host.origin, 30_000);
-  // The sessions belong to this disposable host only. Keep the native cookie
-  // jar while the production host changes port by forwarding through the client.
-  const observe = async (request: typeof admin, label: string) => {
-    const state = async () => (await request("/_emdash/api/proof-render")).json();
-    const render = (mode: string) => request(`/_emdash/api/proof-render?mode=${mode}`, {});
-    const synchronous = await render("sync");
-    expect(synchronous.status).toBe(200);
-    expect(Number(synchronous.headers.get("X-Proof-Render-Milliseconds"))).toBeGreaterThanOrEqual(
-      10_250,
-    );
-    expect(await synchronous.text()).toContain("Trusted render settled");
-    const pending = [render("async"), render("async")];
-    // Observe actual Component execution, not just a request counter.
-    await expect.poll(async () => (await state()).active, { timeout: 5_000 }).toBe(2);
-    const busy = await render("fast");
-    expect(busy.status).toBe(503);
-    expect(busy.headers.get("Retry-After")).toBe("1");
-    const timedOut = await Promise.all(pending);
-    expect(timedOut.map((response) => response.status)).toEqual([504, 504]);
-    expect((await state()).active).toBe(2);
-    expect((await render("fast")).status).toBe(503);
-    await expect.poll(async () => (await state()).active, { timeout: 5_000 }).toBe(0);
-    expect((await state()).maximum).toBe(2);
-    expect((await render("fast")).status).toBe(200);
-    const oversized = await render("large");
-    expect(oversized.status).toBe(413);
-    expect(await oversized.text()).not.toContain("😀");
-    expect((await render("fast")).status).toBe(200);
-    console.info(
-      JSON.stringify({
-        host: label,
-        synchronousMilliseconds: synchronous.headers.get("X-Proof-Render-Milliseconds"),
-        timeoutStatuses: timedOut.map((response) => response.status),
-        actualMaximum: (await state()).maximum,
-      }),
-    );
-  };
-  await observe(admin, "development");
-  await host.stop();
-  await buildHost(root, lifecycle);
-  host = await startHost(root, true, lifecycle);
-  await observe(admin.at(host.origin), "production");
-  const anonymous = client(host.origin);
-  const denied = await anonymous("/_emdash/api/proof-render?mode=fast", {});
-  expect(denied.status).toBe(401);
-  expect(await denied.text()).not.toContain("Trusted render settled");
-}, 180_000);
-
+// Integration boundary: only an installed package and compiled Astro host can
+// establish development/production CSS, nested output and served asset parity.
 test("host-compiled native route preview preserves nested production CSS and assets", async () => {
   const lifecycle = createLifecycle();
   onTestFinished(() => lifecycle.stop());

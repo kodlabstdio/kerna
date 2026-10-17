@@ -16,6 +16,8 @@ import {
   startHost,
 } from "./native-fixture.mjs";
 
+// Integration boundary: native signing, published snapshots and storage failure
+// isolation must hold through EmDash's real routing and content repository.
 test("native publication and preview keep drafts out of anonymous responses", async () => {
   const lifecycle = createLifecycle();
   onTestFinished(() => lifecycle.stop());
